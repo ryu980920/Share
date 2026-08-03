@@ -11,6 +11,7 @@ merge.py — runs/**/metrics.csv 를 모아 하나의 DoE 격자표(grid.csv)로
 """
 
 import argparse
+import json
 import sys
 from pathlib import Path
 
@@ -126,6 +127,53 @@ def main():
     df_u = df_u.sort_values(["D_BCAT_nm", "doping_multiplier"])
     df_u.to_csv(OUT_CSV, index=False)
     print(f"\n저장: {OUT_CSV.relative_to(ROOT)}  ({len(df_u)}행)")
+
+    # ------------------------------------------------------------------
+    # 5) 대시보드용 status.json  (dashboard/index.html 이 읽는다)
+    # ------------------------------------------------------------------
+    xcheck = []
+    for key, g in dup.groupby("_key") if not dup.empty else []:
+        vals = g["I_GIDL_A_um"].to_numpy(dtype=float)
+        if np.all(np.isfinite(vals)) and np.mean(vals) != 0:
+            spread = float((np.max(vals) - np.min(vals)) / abs(np.mean(vals)))
+        else:
+            spread = None
+        xcheck.append({"key": key,
+                       "owners": [str(o) for o in g["owner"]],
+                       "spread": spread,
+                       "ok": (spread is not None and spread <= XCHECK_TOL)})
+
+    def owner_of(d):
+        return "A" if d in (24, 30) else ("B" if d in (36, 42) else "C")
+
+    points = []
+    for x in x_levels:
+        for y in y_levels:
+            rid = f"D{int(x)}_N{int(round(y*100)):03d}"
+            hit = df_u[(np.isclose(df_u.D_BCAT_nm, x)) &
+                       (np.isclose(df_u.doping_multiplier, y))]
+            rec = {"run_id": rid, "D": x, "N": y,
+                   "owner": owner_of(int(x)), "done": not hit.empty}
+            if not hit.empty:
+                r = hit.iloc[0]
+                for k in ["I_GIDL_A_um", "Vth_sat_V", "SS_mV_dec",
+                          "DIBL_mV_V", "Ion_A_um"]:
+                    v = r.get(k, None)
+                    rec[k] = (float(v) if v is not None and np.isfinite(v) else None)
+                rec["owner_actual"] = str(r.get("owner", ""))
+            points.append(rec)
+
+    status = {
+        "generated": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
+        "x_levels": x_levels, "y_levels": y_levels,
+        "done": done, "total": len(planned),
+        "points": points, "xcheck": xcheck,
+    }
+    out_json = ROOT / "analysis" / "status.json"
+    with open(out_json, "w", encoding="utf-8") as f:
+        json.dump(status, f, ensure_ascii=False, indent=1)
+    print(f"저장: {out_json.relative_to(ROOT)}  (대시보드용)")
+
     print("다음: python analysis/contour.py")
     return 0
 
