@@ -1,0 +1,44 @@
+# ===== Sentaurus 대용량 산출물 (절대 커밋 금지) =====
+*.tdr
+*.grd
+*.dat
+*.plt
+*.bnd
+*.sat
+*.mac
+*.log
+*.out
+*.err
+n@node@_*
+pp@node@_*
+
+# Workbench 프로젝트 내부
+gtree.dat
+gvars.dat
+*_dvs.cmd
+prj.*
+.project*
+results/
+scratch/
+
+# ===== 예외: 반드시 커밋할 것 =====
+!runs/**/idvg.csv
+!runs/**/metrics.csv
+!analysis/**/*.csv
+!baseline/*.cmd
+!baseline/*.scm
+
+# ===== 일반 =====
+__pycache__/
+*.pyc
+.venv/
+venv/
+.ipynb_checkpoints/
+.DS_Store
+Thumbs.db
+*~
+*.swp
+
+# 대용량 이미지 (플롯 PNG는 허용)
+*.tif
+*.bmp

@@ -1,0 +1,29 @@
+# 격자점 메타데이터 — 이 파일을 복사해서 채운다
+# ★ D_BCAT_nm 과 doping_multiplier 는 폴더 이름과 반드시 일치해야 한다.
+#   불일치하면 merge.py 가 엉뚱한 좌표에 값을 꽂는다.
+
+run_id: ""                    # 예: D36_N100 (폴더 이름과 동일)
+owner: ""                     # A / B / C
+date: ""                      # YYYY-MM-DD
+
+# --- 스윕 변수 (이 두 개만 격자점마다 다르다) ---
+D_BCAT_nm:                    # 24 / 30 / 36 / 42 / 48
+doping_multiplier:            # 0.30 / 0.50 / 0.70 / 0.85 / 1.00
+
+# --- 환경 (교차검증에서 불일치가 나면 여기를 대조한다) ---
+sentaurus_version: ""         # 예: V-2023.12
+btbt_model: "NonlocalPath"    # NonlocalPath / Hurkx / Schenk
+mesh_preset: "baseline"       # baseline / coarse / fine
+
+# --- 실행 정보 ---
+status: "running"             # running / done / failed
+runtime_min:                  # 실행 시간 [분]
+converged:                    # true / false
+
+# --- baseline 에서 벗어난 것이 있다면 여기에 전부 적는다 ---
+# (없으면 빈 리스트로 둔다. 있는데 안 적으면 그 격자점은 신뢰할 수 없다)
+deviations_from_baseline: []
+# 예:
+#   - "MinStep 을 1e-6 -> 1e-8 로 낮춤 (Vg=-1.0 에서 수렴 실패)"
+
+notes: ""

@@ -1,0 +1,43 @@
+# =====================================================================
+#  지표 추출 기준 — 이 파일이 지표 정의의 유일한 출처
+#
+#  ★ 왜 이 파일이 중요한가
+#    Vth 를 "Id = 1e-7 A/um 지점"으로 잡는 사람과 "선형 외삽"으로 잡는 사람이
+#    섞이면, 등고선의 굴곡이 물리가 아니라 정의 차이 때문에 생긴다.
+#    그 오류는 그림만 봐서는 절대 발견되지 않는다.
+#    → 지표는 전원이 extract.py 로만 뽑는다. 손계산 금지.
+#
+#  ★ 수정하려면 PR + 2인 승인. 수정 시 모든 격자점을 재추출해야 한다:
+#       python analysis/extract.py --all
+# =====================================================================
+
+vth:
+  method: "constant_current"     # constant_current | linear_extrapolation
+  I_crit_A_per_um: 1.0e-7        # 이 전류에 도달하는 Vg 를 Vth 로 정의
+
+ss:
+  # 서브스레숄드 스윙: 이 전류 구간에서 log10(Id) vs Vg 기울기의 역수 [mV/dec]
+  fit_I_min_A_per_um: 1.0e-12
+  fit_I_max_A_per_um: 1.0e-9
+  use_min_slope: true            # 구간 내 최소 SS(=최급 기울기)를 채택
+
+dibl:
+  # DIBL = (Vth_lin - Vth_sat) / (Vd_sat - Vd_lin)  [mV/V]
+  Vd_lin: 0.1
+  Vd_sat: 1.0
+
+gidl:
+  # ★ 이 프로젝트의 주 지표.
+  #   Vd = Vd_sat, Vg = V_gidl 에서의 드레인 전류를 GIDL 로 정의한다.
+  #   V_gidl 는 실제 DRAM 의 워드라인 오프 전압(VBBW) 을 모사한 값.
+  V_gidl: -0.5
+  # 보조 지표: Vg < 0 구간 전체에서의 최대 전류 (측정점 선택 민감도 확인용)
+  report_max_negative: true
+
+ion:
+  Vg: 2.8          # VPP
+  Vd: "sat"
+
+ioff:
+  Vg: 0.0
+  Vd: "sat"

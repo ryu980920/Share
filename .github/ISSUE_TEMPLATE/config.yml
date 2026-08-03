@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 베이스라인 논문 (MDPI 2022, 오픈 액세스)
+    url: https://www.mdpi.com/2072-666X/13/9/1476
+    about: 구조 치수·시뮬레이션 조건의 출처. 작업 전 반드시 정독.
+  - name: 작업 규칙 (CONTRIBUTING.md)
+    url: ../blob/main/CONTRIBUTING.md
+    about: 명명 규칙·파일 규격. 어기면 자동 병합이 깨진다.
+  - name: 역할·일정 (docs/ROLES.md)
+    url: ../blob/main/docs/ROLES.md
+    about: 내 담당 격자점이 어디인지 확인.
