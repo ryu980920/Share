@@ -2,7 +2,7 @@
 
 차세대반도체 경진대회 (소자/공정 부문) · 3인 · Synopsys Sentaurus TCAD
 
-**📊 [진행 현황 대시보드](https://jujushmaterial.github.io/BCAT-DBCAT-ESD-TCAD/)** ← Pages 배포 후 주소 수정할 것
+**📊 [진행 현황 대시보드](https://ryu980920.github.io/Share.github.io/)**
 
 ---
 
@@ -116,7 +116,7 @@ python analysis/make_dummy_data.py --clean   # ★ 반드시 삭제
 
 **Settings → Pages → Source: `Deploy from a branch` → `main` / `/ (root)`**
 
-배포되면 `https://<계정>.github.io/<저장소>/` 로 대시보드가 열린다.
+배포되면 `https://ryu980920.github.io/Share.github.io/` 로 대시보드가 열린다.
 `index.html` 이 같은 저장소의 `analysis/status.json` 을 읽으므로 별도 설정이 없다.
 
 > 이 저장소는 **public** 이다. 대회 요강에 사전 공개 관련 조항이 있는지 한 번 확인할 것.
