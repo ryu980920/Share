@@ -41,3 +41,21 @@ ion:
 ioff:
   Vg: 0.0
   Vd: "sat"
+
+# =====================================================================
+#  Sentaurus Workbench 변수표를 그대로 쓸 때의 매핑
+#
+#  SWB 에서 Export Variables 로 CSV 를 뽑으면 build.py 가 자동 인식한다.
+#  아래 이름들이 SWB 의 파라미터/변수 이름과 일치해야 한다.
+#  (SWB 쪽 이름을 바꾸거나, 여기를 SWB 이름에 맞추거나 — 둘 중 하나)
+# =====================================================================
+swb:
+  x_param: "DBCAT"        # 질화막 두께 [nm]  — SWB 파라미터 이름
+  y_param: "Nmult"        # S/D 도핑 배수 [-] — SWB 파라미터 이름
+  map:                    # 우리 지표 이름 : SWB 추출변수 이름
+    Vth_lin_V:   "VtLin"
+    Vth_sat_V:   "Vtgm"
+    Ion_A_um:    "IdSat"
+    Ioff_A_um:   "Ioff"
+    I_GIDL_A_um: "Igidl"  # ★ SWB 에 아직 없다. 반드시 추가할 것 (아래 참고)
+    T_RET_s:     "T_RET"

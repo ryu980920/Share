@@ -1,16 +1,21 @@
 #!/usr/bin/env python3
 """
-plt2csv.py — Sentaurus 전류 파일(.plt, DF-ISE xyplot)을 idvg.csv 로 변환한다.
+plt2csv.py — Sentaurus 전류 파일(.plt)을 스윕 CSV 에 한 줄씩 쌓는다.
 
-★ Sentaurus 는 선형/포화 스윕을 별도 .plt 로 뱉는다. 두 개를 합쳐 하나의 csv 로 만든다.
+★ 격자점 하나를 돌릴 때마다 이 명령을 한 번씩 실행하면,
+  같은 CSV 파일에 계속 누적된다. 스윕이 끝나면 그 파일 하나만 올리면 된다.
 
 사용법
-    python analysis/plt2csv.py IdVg_lin_des.plt IdVg_sat_des.plt -o runs/D36_N100/idvg.csv
-    python analysis/plt2csv.py --list IdVg_lin_des.plt        # 데이터셋 이름만 확인
+    # 처음 (파일 새로 만들기)
+    python analysis/plt2csv.py IdVg_lin_des.plt IdVg_sat_des.plt \
+           --run-id D24_N030 --out runs/유용성_D24.csv
 
-★ 데이터셋 이름이 버전/설정마다 다르다. 처음 한 번은 --list 로 확인하고
-  --vg / --id 옵션으로 정확한 이름을 지정할 것. 확인한 이름은 팀에 공유해서
-  3명이 같은 컬럼을 쓰도록 한다.
+    # 이후 (같은 파일에 덧붙이기)
+    python analysis/plt2csv.py IdVg_lin_des.plt IdVg_sat_des.plt \
+           --run-id D24_N050 --out runs/유용성_D24.csv --append
+
+    # 데이터셋 이름 확인 (처음 한 번은 반드시)
+    python analysis/plt2csv.py IdVg_lin_des.plt --list
 """
 
 import argparse
@@ -22,93 +27,98 @@ import numpy as np
 
 
 def parse_plt(path):
-    """DF-ISE xyplot 파일 → (datasets, data array). 실패 시 예외."""
     txt = Path(path).read_text(errors="ignore")
-
     m = re.search(r"datasets\s*=\s*\[(.*?)\]", txt, re.S)
     if not m:
-        raise ValueError(f"{path}: 'datasets = [...]' 를 찾지 못함. "
-                         f"DF-ISE xyplot 형식이 맞는지 확인할 것.")
-    datasets = re.findall(r'"([^"]+)"', m.group(1))
-
+        raise ValueError(f"{path}: 'datasets = [...]' 없음. DF-ISE xyplot 형식이 맞는지 확인.")
+    ds = re.findall(r'"([^"]+)"', m.group(1))
     dm = re.search(r"Data\s*\{(.*)\}", txt, re.S)
     if not dm:
-        raise ValueError(f"{path}: 'Data {{ ... }}' 블록을 찾지 못함.")
-    nums = np.array([float(v) for v in
-                     re.findall(r"[-+]?\d*\.?\d+(?:[eEdD][-+]?\d+)?",
-                                dm.group(1).replace("D", "E"))])
-
-    ncol = len(datasets)
-    if ncol == 0 or len(nums) % ncol != 0:
-        raise ValueError(f"{path}: 데이터 개수({len(nums)})가 "
-                         f"컬럼 수({ncol})로 나누어떨어지지 않음.")
-    return datasets, nums.reshape(-1, ncol)
+        raise ValueError(f"{path}: 'Data {{ ... }}' 블록 없음.")
+    nums = np.array([float(v) for v in re.findall(
+        r"[-+]?\d*\.?\d+(?:[eEdD][-+]?\d+)?", dm.group(1).replace("D", "E"))])
+    if not ds or len(nums) % len(ds) != 0:
+        raise ValueError(f"{path}: 데이터({len(nums)})가 컬럼({len(ds)})으로 안 나눠짐.")
+    return ds, nums.reshape(-1, len(ds))
 
 
-def pick(datasets, patterns, what):
-    for p in patterns:
-        for i, d in enumerate(datasets):
+def pick(ds, pats, what):
+    for p in pats:
+        for i, d in enumerate(ds):
             if re.search(p, d, re.I):
                 return i
-    raise ValueError(
-        f"{what} 컬럼을 자동으로 찾지 못했다.\n"
-        f"  사용 가능한 데이터셋: {datasets}\n"
-        f"  → --vg / --id 옵션으로 이름을 직접 지정할 것."
-    )
+    raise ValueError(f"{what} 컬럼 자동 인식 실패.\n  사용 가능: {ds}\n"
+                     f"  → --vg / --id 로 이름을 직접 지정할 것.")
 
 
-def load(path, vg_name, id_name):
-    datasets, data = parse_plt(path)
-    iv = (datasets.index(vg_name) if vg_name
-          else pick(datasets, [r"gate.*OuterVoltage", r"gate.*Voltage"], "Vg"))
-    ii = (datasets.index(id_name) if id_name
-          else pick(datasets, [r"drain.*TotalCurrent", r"drain.*Current"], "Id"))
+def load(path, vgn, idn):
+    ds, data = parse_plt(path)
+    iv = ds.index(vgn) if vgn else pick(ds, [r"gate.*OuterVoltage", r"gate.*Voltage"], "Vg")
+    ii = ds.index(idn) if idn else pick(ds, [r"drain.*TotalCurrent", r"drain.*Current"], "Id")
     return data[:, iv], data[:, ii]
 
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("lin_plt", help="선형영역(Vd=0.1V) .plt")
-    ap.add_argument("sat_plt", nargs="?", help="포화영역(Vd=1.0V) .plt")
-    ap.add_argument("-o", "--out", default="idvg.csv")
-    ap.add_argument("--vg", default=None, help="Vg 데이터셋 이름 직접 지정")
-    ap.add_argument("--id", dest="idname", default=None, help="Id 데이터셋 이름 직접 지정")
+    ap.add_argument("lin_plt")
+    ap.add_argument("sat_plt", nargs="?")
+    ap.add_argument("--run-id", help="예: D24_N030")
+    ap.add_argument("-o", "--out", help="예: runs/유용성_D24.csv")
+    ap.add_argument("--append", action="store_true", help="기존 파일에 덧붙이기")
+    ap.add_argument("--vg"); ap.add_argument("--id", dest="idname")
     ap.add_argument("--width-um", type=float, default=1.0,
-                    help="전류 정규화 폭 [um]. baseline/params.yaml 의 device_width_um 와 같게")
-    ap.add_argument("--list", action="store_true", help="데이터셋 이름만 출력하고 종료")
-    args = ap.parse_args()
+                    help="전류 정규화 폭. baseline/params.yaml 의 device_width_um 와 같게")
+    ap.add_argument("--list", action="store_true", help="데이터셋 이름만 출력")
+    a = ap.parse_args()
 
-    if args.list:
-        ds, data = parse_plt(args.lin_plt)
-        print(f"{args.lin_plt}  ({data.shape[0]}행 x {data.shape[1]}열)")
+    if a.list:
+        ds, data = parse_plt(a.lin_plt)
+        print(f"{a.lin_plt}  ({data.shape[0]}행 x {data.shape[1]}열)")
         for i, d in enumerate(ds):
             print(f"  [{i:2d}] {d}")
         return 0
 
-    vg_l, id_l = load(args.lin_plt, args.vg, args.idname)
-    if args.sat_plt:
-        vg_s, id_s = load(args.sat_plt, args.vg, args.idname)
+    if not a.run_id or not a.out:
+        ap.error("--run-id 와 --out 이 필요하다")
+    if not re.fullmatch(r"D\d+_N\d{3}(_\w+)?", a.run_id):
+        print(f"[경고] run-id '{a.run_id}' 가 규칙(D36_N100)과 다르다. "
+              f"이대로면 격자에 안 올라간다.", file=sys.stderr)
+
+    vgl, idl = load(a.lin_plt, a.vg, a.idname)
+    if a.sat_plt:
+        vgs, ids = load(a.sat_plt, a.vg, a.idname)
     else:
-        print("[경고] 포화 .plt 를 안 줬다. Id_sat 을 Id_lin 으로 채운다 — "
-              "DIBL/GIDL/Ion 이 전부 틀린 값이 된다.", file=sys.stderr)
-        vg_s, id_s = vg_l, id_l
+        print("[경고] 포화 .plt 가 없다. DIBL/GIDL/Ion 이 전부 틀린 값이 된다.", file=sys.stderr)
+        vgs, ids = vgl, idl
 
-    # 선형 스윕의 Vg 격자를 기준으로 포화 전류를 보간
-    o = np.argsort(vg_l)
-    vg_l, id_l = vg_l[o], id_l[o]
-    o2 = np.argsort(vg_s)
-    id_s_i = np.interp(vg_l, vg_s[o2], np.abs(id_s[o2]))
+    o = np.argsort(vgl); vgl, idl = vgl[o], idl[o]
+    o2 = np.argsort(vgs)
+    ids_i = np.interp(vgl, vgs[o2], np.abs(ids[o2]))
 
-    w = args.width_um
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    with open(out, "w", encoding="utf-8") as f:
-        f.write("Vg,Id_lin,Id_sat\n")
-        for a, b, c in zip(vg_l, np.abs(id_l) / w, id_s_i / w):
-            f.write(f"{a:.4f},{b:.6e},{c:.6e}\n")
+    out = Path(a.out); out.parent.mkdir(parents=True, exist_ok=True)
+    exists = out.exists() and a.append
+    if exists:
+        old = out.read_text(encoding="utf-8")
+        if f"\n{a.run_id}," in old:
+            print(f"[중단] {out.name} 에 {a.run_id} 가 이미 있다. "
+                  f"다시 넣으려면 해당 줄을 지우고 실행할 것.", file=sys.stderr)
+            return 1
 
-    print(f"저장: {out}  ({len(vg_l)}점, Vg {vg_l.min():.2f} ~ {vg_l.max():.2f} V)")
-    print(f"다음: python analysis/extract.py {out.parent}")
+    w = a.width_um
+    with open(out, "a" if exists else "w", encoding="utf-8") as f:
+        if not exists:
+            f.write("run_id,Vg,Id_lin,Id_sat\n")
+        for v, b, c in zip(vgl, np.abs(idl) / w, ids_i / w):
+            f.write(f"{a.run_id},{v:.4f},{b:.6e},{c:.6e}\n")
+
+    n = sum(1 for _ in open(out, encoding="utf-8")) - 1
+    ids_in = set()
+    for line in open(out, encoding="utf-8"):
+        if "," in line and not line.startswith("run_id"):
+            ids_in.add(line.split(",")[0])
+    print(f"{'덧붙임' if exists else '새로 만듦'}: {out}  "
+          f"({a.run_id} {len(vgl)}점 추가 · 파일 전체 {len(ids_in)}개 격자점 / {n}줄)")
+    print(f"현재 들어 있는 격자점: {', '.join(sorted(ids_in))}")
     return 0
 
 

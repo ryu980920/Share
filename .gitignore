@@ -5,28 +5,21 @@
 *.plt
 *.bnd
 *.sat
-*.mac
 *.log
 *.out
 *.err
 n@node@_*
-pp@node@_*
 
 # Workbench 프로젝트 내부
 gtree.dat
 gvars.dat
-*_dvs.cmd
 prj.*
-.project*
 results/
 scratch/
 
 # ===== 예외: 반드시 커밋할 것 =====
-!runs/**/idvg.csv
-!runs/**/metrics.csv
-!analysis/**/*.csv
-!baseline/*.cmd
-!baseline/*.scm
+!runs/*.csv
+!analysis/*.csv
 
 # ===== 일반 =====
 __pycache__/
@@ -37,8 +30,3 @@ venv/
 .DS_Store
 Thumbs.db
 *~
-*.swp
-
-# 대용량 이미지 (플롯 PNG는 허용)
-*.tif
-*.bmp

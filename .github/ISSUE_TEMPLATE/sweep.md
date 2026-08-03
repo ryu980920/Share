@@ -1,20 +1,19 @@
 ---
-name: "① 격자점 실행 (스윕 과제)"
-about: "DoE 격자점 하나를 돌리는 작업"
-title: "[?] D??_N??? 실행"
-labels: ["sweep", "phase-2"]
-assignees: ""
+name: "스윕 과제"
+about: "격자점 실행 / 검증 / 분석 공통"
+title: "[담당자] "
+labels: []
 ---
 
-## 담당 / 격자점
+## 담당 / 대상
 
-- 담당자: <!-- A / B / C -->
-- Run ID: <!-- 예: D36_N100 -->
-- Phase: <!-- P1 단독스윕 / P2 2차원DoE -->
+- 담당자: <!-- 유용성 / 주수빈 / 남다연 / 전원 -->
+- 올릴 파일: `runs/<이름>_<스윕이름>.csv`
+- Run ID: <!-- 예: D24_N030 ~ D24_N100 -->
 
-## 고정 조건 (baseline — 절대 건드리지 않는다)
+## 고정 조건 (baseline — 건드리지 않는다)
 
-`baseline/params.yaml` 을 그대로 쓴다. 아래는 확인용 요약이다.
+`baseline/params.yaml` 그대로. 확인용 요약:
 
 | 항목 | 값 |
 |---|---|
@@ -26,40 +25,27 @@ assignees: ""
 | Vd (선형/포화) | 0.1 V / 1.0 V |
 | Vg 스윕 | -1.0 → +2.8 V, 0.05 V step |
 
-## 이번에 바꾸는 것 (딱 두 개)
+## 이번에 바꾸는 것
 
 | 변수 | 값 | baseline 대비 |
 |---|---|---|
-| DBCAT (질화막 두께) | ___ nm | ___ |
-| S/D 도핑 배수 | ×___ | ___ |
+| DBCAT | ___ nm | |
+| S/D 도핑 배수 | ×___ | |
 
-> **다른 값을 함께 바꾸면 두 변수의 효과가 섞여서 그 격자점은 버려야 한다.**
-> 수렴 때문에 어쩔 수 없이 바꿨다면 `run.yaml` 의 `deviations_from_baseline` 에 전부 적을 것.
+> 다른 값을 함께 바꾸면 두 변수의 효과가 섞여 그 격자점은 버려야 한다.
+> 수렴 때문에 어쩔 수 없이 바꿨다면 이 Issue 에 전부 적을 것.
 
-## 산출물 체크리스트
+## 체크리스트
 
-- [ ] `runs/<RUN_ID>/run.yaml` 채움 (버전, 모델, 수렴 여부 포함)
-- [ ] `runs/<RUN_ID>/idvg.csv` — 컬럼 `Vg, Id_lin, Id_sat`, 단위 A/µm
-- [ ] `python analysis/extract.py runs/<RUN_ID>` 실행 → `metrics.csv` 생성
-- [ ] `runs/<RUN_ID>/plot.png` — Id-Vg log 스케일
-- [ ] `runs/<RUN_ID>/README.md` — 3줄 요약
-- [ ] PR 생성 (제목: `[담당자] <RUN_ID> 완료`)
+- [ ] 격자점 전부 실행 완료
+- [ ] `python analysis/build.py` 에서 경고 없음
+- [ ] GIDL 구간(Vg < 0)에서 전류가 증가하는 형태가 보임 — 안 보이면 BTBT 가 안 켜진 것
+- [ ] push 후 대시보드에 반영 확인
 
-## 완료 판정 기준
+## 결과
 
-- [ ] 수렴 실패 없음 (또는 실패 조건이 `run.yaml` 에 기록됨)
-- [ ] GIDL 구간(Vg < 0)에서 전류가 실제로 증가하는 형태가 보임 — 안 보이면 BTBT 모델이 안 켜진 것
-- [ ] Vth 가 baseline 대비 상식적 범위 (±0.2 V 이내)
-- [ ] `metrics.csv` 에 nan 이 없음
-
-## 결과 (완료 후 여기에 채운다)
-
-| 지표 | 값 | baseline 대비 |
-|---|---|---|
-| I_GIDL [A/µm] | | |
-| Vth_sat [V] | | |
-| SS [mV/dec] | | |
-| DIBL [mV/V] | | |
-| Ion [A/µm] | | |
+| Run ID | I_GIDL [A/µm] | Vth_sat [V] | SS [mV/dec] | Ion [A/µm] |
+|---|---|---|---|---|
+|  |  |  |  |  |
 
 한 줄 소견:

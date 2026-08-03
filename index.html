@@ -5,104 +5,77 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>BCAT TCAD — Run Sheet</title>
 <style>
-:root{
-  --bg:#0d1117; --panel:#161b22; --panel2:#1c2230; --line:#2a3441;
-  --tx:#e6edf3; --tx2:#9aa7b4; --tx3:#6b7785;
-  --A:#58a6ff; --B:#3fb950; --C:#d29922; --all:#a371f7;
-  --warn:#f85149; --ok:#3fb950;
-}
+:root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--line:#2a3441;
+  --tx:#e6edf3;--tx2:#9aa7b4;--tx3:#6b7785;
+  --A:#58a6ff;--B:#3fb950;--C:#d29922;--all:#a371f7;--warn:#f85149;--ok:#3fb950}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--tx);
-  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif;
-  font-size:14px;line-height:1.6}
+body{margin:0;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif}
 .wrap{max-width:1180px;margin:0 auto;padding:24px 20px 80px}
-header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:24px}
+header{border-bottom:1px solid var(--line);padding-bottom:18px;margin-bottom:22px}
 h1{font-size:21px;margin:0 0 4px}
 .sub{color:var(--tx2);font-size:13px}
-.badge{display:inline-block;padding:1px 7px;border-radius:10px;font-size:11px;
-  font-weight:600;vertical-align:middle}
+.badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .bA{background:rgba(88,166,255,.15);color:var(--A)}
 .bB{background:rgba(63,185,80,.15);color:var(--B)}
 .bC{background:rgba(210,153,34,.15);color:var(--C)}
 .ball{background:rgba(163,113,247,.15);color:var(--all)}
 .bflag{background:rgba(248,81,73,.15);color:var(--warn)}
-
-/* 데이터 소스 */
 #src{background:var(--panel);border:1px solid var(--line);border-radius:8px;
-  padding:14px 16px;margin-bottom:22px;font-size:13px}
+  padding:13px 16px;margin-bottom:20px;font-size:13px}
 #src .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-input[type=password],input[type=text]{background:var(--bg);border:1px solid var(--line);
-  color:var(--tx);border-radius:6px;padding:6px 10px;font-size:13px;font-family:inherit}
 button{background:var(--panel2);border:1px solid var(--line);color:var(--tx);
   border-radius:6px;padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit}
 button:hover{border-color:var(--A)}
-button.pri{background:var(--A);border-color:var(--A);color:#06121f;font-weight:600}
-#srcmsg{color:var(--tx2);margin-top:8px;font-size:12px}
-
-/* 진행률 */
-.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
-  gap:10px;margin-bottom:22px}
+#srcmsg{color:var(--tx2);margin-top:7px;font-size:12px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:20px}
 .stat{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
 .stat .n{font-size:22px;font-weight:700}
 .stat .l{color:var(--tx3);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-
-/* 격자 */
 .gridbox{background:var(--panel);border:1px solid var(--line);border-radius:8px;
-  padding:16px;margin-bottom:22px;overflow-x:auto}
+  padding:16px;margin-bottom:20px;overflow-x:auto}
 table.grid{border-collapse:collapse;font-size:12px}
 table.grid th{color:var(--tx3);font-weight:500;padding:5px 9px;white-space:nowrap}
 table.grid td{padding:0;text-align:center}
-.cell{width:78px;height:44px;border-radius:5px;margin:2px;display:flex;
-  flex-direction:column;align-items:center;justify-content:center;
-  border:1px solid var(--line);cursor:default;font-size:10px;line-height:1.25}
-.cell.done{border-color:transparent}
-.cell .rid{font-weight:600;font-size:10px}
+.cell{width:80px;height:46px;border-radius:5px;margin:2px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border:1px solid var(--line);font-size:10px;line-height:1.25}
+.cell .rid{font-weight:600}
 .cell .v{color:var(--tx3);font-size:9px}
 .legend{color:var(--tx3);font-size:11px;margin-top:10px}
-
-/* 과제 */
-h2{font-size:14px;color:var(--tx2);margin:26px 0 10px;font-weight:600}
+h2{font-size:14px;color:var(--tx2);margin:24px 0 10px;font-weight:600}
 .ph{color:var(--tx3);font-weight:400;font-size:12px;margin-left:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:10px}
-.card{background:var(--panel);border:1px solid var(--line);border-left-width:3px;
-  border-radius:8px;padding:12px 14px;cursor:pointer;transition:.12s}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:8px;
+  padding:12px 14px;cursor:pointer;transition:.12s}
 .card:hover{background:var(--panel2);transform:translateY(-1px)}
-.card.oA{border-left-color:var(--A)} .card.oB{border-left-color:var(--B)}
-.card.oC{border-left-color:var(--C)} .card.o전원{border-left-color:var(--all)}
+.card.oA{border-left-color:var(--A)}.card.oB{border-left-color:var(--B)}
+.card.oC{border-left-color:var(--C)}.card.oall{border-left-color:var(--all)}
 .card .t{font-weight:600;margin:6px 0 4px}
-.card .p{color:var(--tx3);font-size:12px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.card .num{color:var(--tx3);font-size:11px;font-variant-numeric:tabular-nums}
-
-/* 모달 */
-#ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;
-  align-items:flex-start;justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50}
+.card .p{color:var(--tx3);font-size:12px;display:-webkit-box;-webkit-line-clamp:2;
+  -webkit-box-orient:vertical;overflow:hidden}
+.card .num{color:var(--tx3);font-size:11px}
+#ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;
+  justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50}
 #ov.on{display:flex}
 #modal{background:var(--panel);border:1px solid var(--line);border-radius:10px;
   max-width:760px;width:100%;padding:26px 30px}
 #modal h3{margin:8px 0 6px;font-size:18px}
-#modal h4{margin:20px 0 7px;font-size:12px;color:var(--tx3);
-  text-transform:uppercase;letter-spacing:.5px}
-#modal ul{margin:0;padding-left:19px} #modal li{margin-bottom:4px}
+#modal h4{margin:20px 0 7px;font-size:12px;color:var(--tx3);text-transform:uppercase;letter-spacing:.5px}
+#modal ul{margin:0;padding-left:19px}#modal li{margin-bottom:4px}
 #modal table{border-collapse:collapse;width:100%;font-size:13px;margin-top:4px}
 #modal td{border:1px solid var(--line);padding:5px 10px}
 #modal td:first-child{color:var(--tx2);width:38%}
-.sweepbox{background:var(--panel2);border:1px solid var(--line);
-  border-radius:7px;padding:13px 15px;margin-top:4px}
-.lv{display:inline-block;background:var(--bg);border:1px solid var(--line);
-  border-radius:5px;padding:3px 9px;margin:3px 4px 0 0;font-size:12px;
-  font-variant-numeric:tabular-nums}
-.lv.base{border-color:var(--A);color:var(--A);font-weight:600}
+.sweepbox{background:var(--panel2);border:1px solid var(--line);border-radius:7px;padding:13px 15px}
+.lv{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:5px;
+  padding:3px 9px;margin:3px 4px 0 0;font-size:12px}
 .note{color:var(--tx3);font-size:12px;margin-top:9px;font-style:italic}
-.warn{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);
-  border-radius:7px;padding:10px 13px;color:#ffa198;font-size:13px;margin-top:14px}
-.rid2{display:inline-block;background:var(--bg);border:1px solid var(--line);
-  border-radius:4px;padding:2px 7px;margin:3px 4px 0 0;font-size:11px;
-  font-family:ui-monospace,Menlo,monospace}
-.close{float:right;color:var(--tx3);cursor:pointer;font-size:22px;line-height:1;
-  background:none;border:none;padding:0}
-footer{margin-top:40px;padding-top:16px;border-top:1px solid var(--line);
-  color:var(--tx3);font-size:12px}
+.warn{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);border-radius:7px;
+  padding:10px 13px;color:#ffa198;font-size:13px;margin-top:14px}
+.rid2{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:4px;
+  padding:2px 7px;margin:3px 4px 0 0;font-size:11px;font-family:ui-monospace,Menlo,monospace}
+.fileline{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);font-size:12px}
+.close{float:right;color:var(--tx3);cursor:pointer;font-size:22px;background:none;border:none;padding:0}
+footer{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);color:var(--tx3);font-size:12px}
 code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 </style>
 </head>
@@ -111,14 +84,13 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 <header>
   <h1>BCAT — DBCAT × Elevated S/D 결합 최적화</h1>
-  <div class="sub">차세대반도체 경진대회 · 3인 · Sentaurus TCAD · 5×5 DoE
+  <div class="sub">차세대반도체 경진대회 · 유용성 · 주수빈 · 남다연 · 5×5 DoE
     &nbsp;·&nbsp; <span id="gen">데이터 없음</span></div>
 </header>
 
 <div id="src">
   <div class="row">
-    <strong>데이터</strong>
-    <span id="mode" style="color:var(--tx3)">확인 중…</span>
+    <strong>데이터</strong><span id="mode" style="color:var(--tx3)">확인 중…</span>
     <span style="flex:1"></span>
     <input type="file" id="file" accept=".json" style="display:none">
     <button onclick="document.getElementById('file').click()">status.json 직접 열기</button>
@@ -134,56 +106,52 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 </div>
 
 <div class="gridbox">
-  <div style="font-weight:600;margin-bottom:10px">DoE 격자 <span class="ph">가로 = DBCAT [nm] · 세로 = 도핑 배수</span></div>
+  <div style="font-weight:600;margin-bottom:10px">DoE 격자
+    <span class="ph">가로 = DBCAT [nm] · 세로 = 도핑 배수</span></div>
   <div id="gridwrap"><div style="color:var(--tx3);font-size:13px">
-    데이터를 불러오면 여기에 25개 격자점의 상태와 GIDL 값이 표시됩니다.</div></div>
-  <div class="legend">테두리 색 = 담당자 (<span style="color:var(--A)">■ A</span>
-    <span style="color:var(--B)">■ B</span> <span style="color:var(--C)">■ C</span>) ·
-    채워진 칸 = 완료. 배경 밝기 = GIDL 크기 (어두울수록 낮음 = 좋음)</div>
+    결과가 올라오면 25개 격자점의 상태와 GIDL 값이 여기 표시됩니다.</div></div>
+  <div class="legend">테두리 색 = 담당자
+    (<span style="color:var(--A)">■ 유용성</span>
+     <span style="color:var(--B)">■ 주수빈</span>
+     <span style="color:var(--C)">■ 남다연</span>) ·
+    채워진 칸 = 완료 · 배경이 어두울수록 GIDL 이 낮다(좋다)</div>
 </div>
 
 <div id="tasks"></div>
 
 <footer>
-  과제를 클릭하면 고정 조건·스윕 범위·완료 판정 기준이 나옵니다.
-  스윕 범위는 전부 <strong>베이스라인 대비 상대값</strong>입니다.<br>
-  역할·일정은 <code>docs/ROLES.md</code>, 작업 규칙은 <code>README.md</code>.
+  과제 카드를 클릭하면 고정 조건 · <strong>스윕 범위(베이스라인 대비 상대값)</strong> ·
+  올릴 파일 이름 · 완료 판정 기준이 나옵니다.<br>
+  역할·일정은 <code>docs/ROLES.md</code>, 결과 올리는 법은 <code>README.md</code>.
 </footer>
-
 </div>
 
-<div id="ov" onclick="if(event.target===this)closeM()">
-  <div id="modal"></div>
-</div>
+<div id="ov" onclick="if(event.target===this)closeM()"><div id="modal"></div></div>
 
 <script src="tasks.js"></script>
 <script>
 let DATA=null;
+const OC={A:'--A',B:'--B',C:'--C'};
+const NAME2OI={};TASKS.forEach(t=>{if(t.oi!=='all')NAME2OI[t.owner]=t.oi;});
 
-/* ---------- 데이터 로딩: 로컬 → GitHub API → 파일 ---------- */
 async function boot(){
   const m=document.getElementById('mode'), msg=document.getElementById('srcmsg');
   if(location.protocol==='file:'){
     m.textContent='로컬 파일';
     msg.innerHTML='브라우저 보안 정책상 <code>file://</code> 에서는 자동 로딩이 안 됩니다. '+
-      '위 버튼으로 <code>analysis/status.json</code> 을 직접 여세요. '+
-      '아니면 저장소 폴더에서 <code>python -m http.server 8000</code> 후 '+
-      '<code>http://localhost:8000/</code> 로 열면 자동으로 됩니다.';
+      '위 버튼으로 <code>analysis/status.json</code> 을 직접 여세요.';
     return;
   }
   m.textContent = location.hostname.endsWith('github.io') ? 'GitHub Pages' : '로컬 서버';
   try{
     const r=await fetch('analysis/status.json?t='+Date.now(),{cache:'no-store'});
     if(!r.ok) throw new Error(r.status);
-    render(await r.json());
-    msg.innerHTML='';
+    render(await r.json()); msg.innerHTML='';
   }catch(e){
-    msg.innerHTML='<code>analysis/status.json</code> 이 아직 없습니다. '+
-      '결과가 하나라도 올라오면 자동으로 채워집니다. '+
-      '(로컬에서 만들려면 <code>python analysis/merge.py</code>)';
+    msg.innerHTML='아직 올라온 결과가 없습니다. 누군가 <code>runs/</code> 에 CSV 를 push 하면 '+
+      '자동으로 채워집니다.';
   }
 }
-
 document.getElementById('file').addEventListener('change',e=>{
   const f=e.target.files[0]; if(!f)return;
   const rd=new FileReader();
@@ -193,18 +161,15 @@ document.getElementById('file').addEventListener('change',e=>{
   rd.readAsText(f);
 });
 
-/* ---------- 렌더 ---------- */
 function render(d){
   DATA=d;
   document.getElementById('gen').textContent='업데이트 '+(d.generated||'–');
   document.getElementById('s1').textContent=d.total;
   document.getElementById('s2').textContent=d.done;
   document.getElementById('s3').textContent=Math.round(d.done/d.total*100)+'%';
-  const xc=d.xcheck||[];
-  const bad=xc.filter(v=>!v.ok).length;
-  const e4=document.getElementById('s4');
-  e4.textContent = xc.length===0 ? '미실시' : (bad? bad+'건 불일치' : xc.length+'쌍 OK');
-  e4.style.color = xc.length===0 ? 'var(--tx3)' : (bad? 'var(--warn)':'var(--ok)');
+  const xc=d.xcheck||[], bad=xc.filter(v=>!v.ok).length, e4=document.getElementById('s4');
+  e4.textContent = xc.length===0?'미실시':(bad?bad+'건 불일치':xc.length+'쌍 OK');
+  e4.style.color = xc.length===0?'var(--tx3)':(bad?'var(--warn)':'var(--ok)');
   drawGrid(d);
 }
 
@@ -217,15 +182,14 @@ function drawGrid(d){
     h+=`<tr><th>×${y.toFixed(2)}</th>`;
     d.x_levels.forEach(x=>{
       const p=d.points.find(q=>q.D===x&&q.N===y);
-      const oc={A:'--A',B:'--B',C:'--C'}[p.owner];
+      const oi=NAME2OI[p.owner]||'A', col=OC[oi];
       let bg='transparent', val='–';
       if(p.done&&p.I_GIDL_A_um>0){
         const t=vals.length>1?(Math.log10(p.I_GIDL_A_um)-lo)/(hi-lo):.5;
-        bg=`hsl(${260-160*t} 55% ${13+22*t}%)`;
-        val=p.I_GIDL_A_um.toExponential(1);
+        bg=`hsl(${260-160*t} 55% ${13+22*t}%)`; val=p.I_GIDL_A_um.toExponential(1);
       }
-      h+=`<td><div class="cell${p.done?' done':''}" style="background:${bg};
-        border-color:var(${oc});border-style:${p.done?'solid':'dashed'};opacity:${p.done?1:.45}">
+      h+=`<td><div class="cell" title="${p.owner||''}" style="background:${bg};
+        border-color:var(${col});border-style:${p.done?'solid':'dashed'};opacity:${p.done?1:.45}">
         <span class="rid">${p.run_id}</span><span class="v">${val}</span></div></td>`;
     });
     h+='</tr>';
@@ -233,17 +197,15 @@ function drawGrid(d){
   document.getElementById('gridwrap').innerHTML=h+'</table>';
 }
 
-/* ---------- 과제 카드 ---------- */
-function ob(o){return o==='전원'?'ball':'b'+o}
 (function(){
   let h='';
   PHASES.forEach(ph=>{
     const ts=TASKS.filter(t=>t.phase===ph.id);
-    h+=`<h2>${ph.id} · ${ph.name}<span class="ph">${ph.week} · ${ts.length}개 과제</span></h2><div class="cards">`;
+    h+=`<h2>${ph.id} · ${ph.name}<span class="ph">${ph.week} · ${ts.length}개</span></h2><div class="cards">`;
     ts.forEach(t=>{
-      h+=`<div class="card o${t.owner}" onclick="openM(${t.n})">
+      h+=`<div class="card o${t.oi}" onclick="openM(${t.n})">
         <span class="num">#${t.n}</span>
-        <span class="badge ${ob(t.owner)}">${t.owner}</span>
+        <span class="badge b${t.oi}">${t.owner}</span>
         ${t.flag?`<span class="badge bflag">${t.flag}</span>`:''}
         <div class="t">${t.title}</div><div class="p">${t.purpose}</div></div>`;
     });
@@ -256,39 +218,34 @@ function openM(n){
   const t=TASKS.find(x=>x.n===n);
   let h=`<button class="close" onclick="closeM()">×</button>
     <span class="num" style="color:var(--tx3)">#${t.n} · ${t.phase}</span>
-    <span class="badge ${ob(t.owner)}">${t.owner}</span>
+    <span class="badge b${t.oi}">${t.owner}</span>
     ${t.flag?`<span class="badge bflag">${t.flag}</span>`:''}
-    <h3>${t.title}</h3>
-    <h4>목적</h4><div>${t.purpose}</div>`;
-
+    <h3>${t.title}</h3><h4>목적</h4><div>${t.purpose}</div>`;
   if(t.fixed){
     h+='<h4>고정 조건 — 건드리지 않는다</h4><table>';
-    t.fixed.forEach(([k,v])=>h+=`<tr><td>${k}</td><td>${v}</td></tr>`);
-    h+='</table>';
+    t.fixed.forEach(([k,v])=>h+=`<tr><td>${k}</td><td>${v}</td></tr>`); h+='</table>';
   }
   if(t.sweep){
     const s=t.sweep;
     h+=`<h4>스윕 범위</h4><div class="sweepbox">
       <div><strong>${s.axis}</strong></div>
       <div style="color:var(--tx2);font-size:13px;margin:4px 0 8px">
-        베이스라인: <span style="color:var(--A)">${s.base}</span> 기준</div>
-      <div>${s.levels.map(l=>`<span class="lv${l.includes(s.base.split(' ')[0])?' base':''}">${l}</span>`).join('')}</div>
+        베이스라인 <span style="color:var(--A)">${s.base}</span> 기준</div>
+      <div>${s.levels.map(l=>`<span class="lv">${l}</span>`).join('')}</div>
       ${s.runs?`<div style="margin-top:11px;color:var(--tx3);font-size:11px">RUN ID</div>
         <div>${s.runs.map(r=>`<span class="rid2">${r}</span>`).join('')}</div>`:''}
-      ${s.note?`<div class="note">※ ${s.note}</div>`:''}
-    </div>`;
+      ${s.file?`<div class="fileline">📄 올릴 파일 &nbsp;<span class="rid2">${s.file}</span></div>`:''}
+      ${s.note?`<div class="note">※ ${s.note}</div>`:''}</div>`;
   }
   h+='<h4>할 일</h4><ul>'+t.todo.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   h+='<h4>완료 판정 기준</h4><ul>'+t.done.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   if(t.out) h+='<h4>산출물</h4><ul>'+t.out.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   if(t.warn) h+=`<div class="warn">⚠ ${t.warn}</div>`;
-
   document.getElementById('modal').innerHTML=h;
   document.getElementById('ov').classList.add('on');
 }
 function closeM(){document.getElementById('ov').classList.remove('on');}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
-
 boot();
 </script>
 </body>
