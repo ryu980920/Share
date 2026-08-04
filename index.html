@@ -88,6 +88,27 @@ h2{font-size:14px;color:var(--tx2);margin:24px 0 10px;font-weight:600}
 .close{float:right;color:var(--tx3);cursor:pointer;font-size:22px;background:none;border:none;padding:0}
 footer{margin-top:38px;padding-top:16px;border-top:1px solid var(--line);color:var(--tx3);font-size:12px}
 code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
+.cell{cursor:pointer}
+.cell:hover{outline:1px solid var(--A)}
+.modalWrap{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:center;
+  justify-content:center;padding:20px;z-index:60}
+.modalWrap.on{display:flex}
+.smallModal{background:var(--panel);border:1px solid var(--line);border-radius:10px;
+  max-width:440px;width:100%;padding:22px 24px}
+.smallModal h3{margin:4px 0 10px;font-size:16px}
+.smallModal p{color:var(--tx2);font-size:12.5px;line-height:1.55}
+.smallModal a{color:var(--A)}
+.smallModal input[type=password],.smallModal input[type=text],.smallModal textarea{
+  width:100%;background:var(--bg);border:1px solid var(--line);border-radius:6px;
+  color:var(--tx);padding:7px 9px;font-size:13px;font-family:inherit;margin-top:4px}
+.smallModal textarea{resize:vertical}
+.attachRow{margin-top:14px}
+.attachRow label{display:block;color:var(--tx2);font-size:12px;margin-bottom:4px}
+.attachRow input[type=file]{font-size:12px;color:var(--tx2)}
+.attachStatus{font-size:11px;color:var(--tx3);margin-left:6px}
+#tokenBtn{font-size:12px}
+.ghsync{color:var(--tx3);font-size:11px;margin-top:3px}
+.savebar{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
 </style>
 </head>
 <body>
@@ -105,6 +126,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     <span style="flex:1"></span>
     <input type="file" id="file" accept=".json" style="display:none">
     <button onclick="document.getElementById('file').click()">status.json 직접 열기</button>
+    <button id="tokenBtn" onclick="openTokenModal()"><span id="tokenStatus">⚪ GitHub 미연동</span></button>
   </div>
   <div id="srcmsg"></div>
   <div id="confirmmsg" style="margin-top:6px"></div>
@@ -126,7 +148,8 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     (<span style="color:var(--A)">■ 유용성</span>
      <span style="color:var(--C)">■ 남다연</span>) ·
     채워진 칸 = 완료 · 배경이 밝을수록 응력이 높다 ·
-    칸 우하단 초록 점 = 사진/커브/메모 첨부됨</div>
+    칸 우하단 초록 점 = 사진/커브/메모 첨부됨 ·
+    <strong>칸을 클릭하면 첨부물 업로드</strong> (GitHub 연동 필요)</div>
 </div>
 
 <div id="tasks"></div>
@@ -134,12 +157,55 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 <footer>
   과제 카드를 클릭하면 고정 조건 · <strong>스윕 범위</strong> · 변경할 것 · 예상 영향 ·
   올릴 파일 이름 · 완료 판정 기준이 나옵니다.<br>
-  체크박스는 <code>analysis/progress.json</code> 을 직접 편집(false→true)하고 commit+push 해야 갱신됩니다 — 정적 사이트라 클릭만으로는 저장되지 않습니다.<br>
+  체크박스와 격자 칸 클릭(첨부물 업로드)은 우측 상단 "GitHub 연동"에서 본인 Personal Access Token 을 등록하면
+  실제로 <code>analysis/progress.json</code>·<code>runs/attachments/</code> 에 커밋됩니다 — 토큰은 이 브라우저에만 저장되고 서버로 전송되지 않습니다.
+  등록 안 하면 지금처럼 눌러도 저장되지 않습니다.<br>
   역할·일정은 <code>docs/ROLES.md</code>, 결과 올리는 법은 <code>README.md</code>, 검증 기록은 <code>docs/technical-notes.md</code>.
 </footer>
 </div>
 
 <div id="ov" onclick="if(event.target===this)closeM()"><div id="modal"></div></div>
+
+<div id="tokenModalWrap" class="modalWrap" onclick="if(event.target===this)closeTokenModal()">
+  <div class="smallModal">
+    <button class="close" onclick="closeTokenModal()">×</button>
+    <h3>GitHub 연동</h3>
+    <p>체크박스와 첨부물 업로드가 실제로 <code>ryu980920/Share</code> 저장소에 커밋되도록 하려면
+       레포 쓰기 권한이 있는 Personal Access Token 이 필요합니다.
+       <strong>이 브라우저(localStorage)에만 저장</strong>되고 다른 곳으로 전송되지 않습니다 —
+       공용 컴퓨터에서는 쓰고 나서 "연동 해제"를 눌러 지우세요.</p>
+    <p><a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">여기서 발급</a>
+       — Fine-grained token, Repository access를 <code>ryu980920/Share</code> 로 지정하고
+       Permissions → <code>Contents: Read and write</code> 부여.</p>
+    <input type="password" id="tokenInput" placeholder="github_pat_...">
+    <div class="savebar">
+      <button onclick="clearToken()">연동 해제</button>
+      <button onclick="saveToken()">저장</button>
+    </div>
+  </div>
+</div>
+
+<div id="attachModalWrap" class="modalWrap" onclick="if(event.target===this)closeAttachModal()">
+  <div class="smallModal">
+    <button class="close" onclick="closeAttachModal()">×</button>
+    <h3 id="attachTitle">첨부물</h3>
+    <div class="attachRow">
+      <label>구조 사진 <code>structure.png</code></label>
+      <input type="file" accept="image/*" id="attachStructure" onchange="uploadAttachFile(this,'structure.png')">
+      <span class="attachStatus" id="attachStructureStatus"></span>
+    </div>
+    <div class="attachRow">
+      <label>Id-Vg / 응력 프로파일 커브 <code>idvg_curve.png</code></label>
+      <input type="file" accept="image/*" id="attachCurve" onchange="uploadAttachFile(this,'idvg_curve.png')">
+      <span class="attachStatus" id="attachCurveStatus"></span>
+    </div>
+    <div class="attachRow">
+      <label>메모 <code>notes.md</code> — 무엇을 바꿨는지 / 이상했던 점 / 다음에 고칠 것</label>
+      <textarea id="attachNotes" rows="6" placeholder="불러오는 중…"></textarea>
+      <div class="savebar"><button onclick="saveAttachNotes()">메모 저장</button></div>
+    </div>
+  </div>
+</div>
 
 <script src="tasks.js"></script>
 <script>
@@ -148,6 +214,132 @@ const OC={A:'--A',C:'--C'};
 const OWNER_NAMES=["유용성","남다연"];
 const NAME2OI={};TASKS.forEach(t=>{if(t.oi!=='all')NAME2OI[t.owner]=t.oi;});
 
+// ----------------------------------------------------------------------
+//  GitHub 연동 — 체크박스·첨부물 업로드를 실제로 커밋한다.
+//  본인 Personal Access Token 을 이 브라우저(localStorage)에만 저장해서 쓴다.
+//  서버가 없는 정적 사이트이므로, 쓰기는 전부 GitHub REST API(Contents)로 직접 한다.
+// ----------------------------------------------------------------------
+const GH_OWNER='ryu980920', GH_REPO='Share', GH_BRANCH='main';
+function ghToken(){ return localStorage.getItem('gh_pat')||''; }
+function ghHeaders(extra){ return Object.assign({Authorization:'token '+ghToken(),
+  Accept:'application/vnd.github+json'}, extra||{}); }
+function utf8ToB64(str){ return btoa(unescape(encodeURIComponent(str))); }
+function b64ToUtf8(b64){ return decodeURIComponent(escape(atob(b64.replace(/\n/g,'')))); }
+function fileToB64(file){
+  return new Promise((res,rej)=>{
+    const rd=new FileReader();
+    rd.onload=()=>res(rd.result.split(',')[1]);
+    rd.onerror=rej;
+    rd.readAsDataURL(file);
+  });
+}
+async function ghGetFile(path){
+  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}?ref=${GH_BRANCH}&t=${Date.now()}`,
+    {headers:ghHeaders(),cache:'no-store'});
+  if(r.status===404) return null;
+  if(!r.ok) throw new Error(`불러오기 실패 (${r.status}) — 토큰 권한을 확인할 것`);
+  return r.json();
+}
+async function ghPutFile(path,contentB64,sha,message){
+  const body={message,content:contentB64,branch:GH_BRANCH};
+  if(sha) body.sha=sha;
+  const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${path}`,
+    {method:'PUT',headers:ghHeaders({'Content-Type':'application/json'}),body:JSON.stringify(body)});
+  if(!r.ok){ const e=await r.json().catch(()=>({})); throw new Error(`저장 실패 (${r.status}) ${e.message||''}`); }
+  return r.json();
+}
+
+function updateTokenStatus(){
+  const el=document.getElementById('tokenStatus');
+  if(el) el.textContent = ghToken() ? '🟢 GitHub 연동됨' : '⚪ GitHub 미연동';
+}
+function openTokenModal(){
+  document.getElementById('tokenInput').value=ghToken();
+  document.getElementById('tokenModalWrap').classList.add('on');
+}
+function closeTokenModal(){ document.getElementById('tokenModalWrap').classList.remove('on'); }
+function saveToken(){
+  const v=document.getElementById('tokenInput').value.trim();
+  if(v) localStorage.setItem('gh_pat',v);
+  closeTokenModal(); updateTokenStatus();
+}
+function clearToken(){
+  localStorage.removeItem('gh_pat');
+  document.getElementById('tokenInput').value='';
+  updateTokenStatus();
+}
+
+// 체크박스 클릭 → analysis/progress.json 을 GitHub API 로 직접 수정+커밋.
+// 두 사람이 거의 동시에 누르면 sha 충돌이 날 수 있어 최신본을 다시 받아 재시도한다.
+async function toggleProgress(taskNum,owner,el){
+  if(!ghToken()){ el.checked=!el.checked; openTokenModal(); return; }
+  const path='analysis/progress.json', wantChecked=el.checked;
+  el.disabled=true;
+  for(let attempt=0;attempt<3;attempt++){
+    try{
+      const file=await ghGetFile(path);
+      const data=JSON.parse(b64ToUtf8(file.content));
+      if(!data[taskNum]) data[taskNum]={};
+      data[taskNum][owner]=wantChecked;
+      await ghPutFile(path, utf8ToB64(JSON.stringify(data,null,1)+'\n'), file.sha,
+        `progress: #${taskNum} ${owner} = ${wantChecked}`);
+      PROGRESS=data; el.disabled=false; return;
+    }catch(e){
+      if(attempt===2){ alert('저장 실패: '+e.message); el.checked=!wantChecked; el.disabled=false; return; }
+      await new Promise(r=>setTimeout(r,400*(attempt+1)));
+    }
+  }
+}
+
+// 첨부물 업로드 모달 — 격자 칸 클릭으로 연다.
+let ATTACH_RUN_ID=null;
+function openAttachModal(runId){
+  if(!ghToken()){ openTokenModal(); return; }
+  ATTACH_RUN_ID=runId;
+  document.getElementById('attachTitle').textContent=runId+' 첨부물';
+  document.getElementById('attachStructure').value='';
+  document.getElementById('attachCurve').value='';
+  document.getElementById('attachStructureStatus').textContent='';
+  document.getElementById('attachCurveStatus').textContent='';
+  document.getElementById('attachNotes').value='';
+  document.getElementById('attachNotes').placeholder='불러오는 중…';
+  document.getElementById('attachModalWrap').classList.add('on');
+  ghGetFile(`runs/attachments/${runId}/notes.md`).then(f=>{
+    document.getElementById('attachNotes').value = f ? b64ToUtf8(f.content) : '';
+    document.getElementById('attachNotes').placeholder='';
+  }).catch(e=>{ document.getElementById('attachNotes').placeholder='불러오기 실패: '+e.message; });
+  ['structure.png','idvg_curve.png'].forEach(fn=>{
+    const statusEl=document.getElementById(fn==='structure.png'?'attachStructureStatus':'attachCurveStatus');
+    ghGetFile(`runs/attachments/${runId}/${fn}`).then(f=>{ if(f) statusEl.textContent='✓ 이미 있음 (다시 올리면 교체)'; })
+      .catch(()=>{});
+  });
+}
+function closeAttachModal(){ document.getElementById('attachModalWrap').classList.remove('on'); }
+
+async function uploadAttachFile(inputEl,filename){
+  const runId=ATTACH_RUN_ID, file=inputEl.files[0];
+  if(!runId||!file) return;
+  const statusEl=document.getElementById(filename==='structure.png'?'attachStructureStatus':'attachCurveStatus');
+  statusEl.textContent='업로드 중…';
+  const path=`runs/attachments/${runId}/${filename}`;
+  try{
+    const b64=await fileToB64(file);
+    const cur=await ghGetFile(path);
+    await ghPutFile(path,b64,cur?cur.sha:null,`${runId} ${filename} 업로드`);
+    statusEl.textContent='✓ 업로드 완료';
+  }catch(e){ statusEl.textContent='실패: '+e.message; }
+}
+
+async function saveAttachNotes(){
+  const runId=ATTACH_RUN_ID; if(!runId) return;
+  const path=`runs/attachments/${runId}/notes.md`, text=document.getElementById('attachNotes').value;
+  try{
+    const cur=await ghGetFile(path);
+    await ghPutFile(path, utf8ToB64(text), cur?cur.sha:null, `${runId} 메모 갱신`);
+    alert('메모 저장됨');
+  }catch(e){ alert('저장 실패: '+e.message); }
+}
+
 async function fetchJson(path){
   const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});
   if(!r.ok) throw new Error(r.status);
@@ -155,6 +347,7 @@ async function fetchJson(path){
 }
 
 async function boot(){
+  updateTokenStatus();
   const m=document.getElementById('mode'), msg=document.getElementById('srcmsg');
   if(location.protocol==='file:'){
     m.textContent='로컬 파일';
@@ -221,7 +414,8 @@ function drawGrid(d){
         <span class="dot ${p.has_curve?'on':'off'}" title="커브"></span>
         <span class="dot ${p.has_notes?'on':'off'}" title="메모"></span>
       </span>`;
-      h+=`<td><div class="cell" title="${p.owner||''}${p.notes_preview?(' — '+p.notes_preview):''}" style="background:${bg};
+      h+=`<td><div class="cell" onclick="openAttachModal('${p.run_id}')"
+        title="${p.owner||''}${p.notes_preview?(' — '+p.notes_preview):''} · 클릭하면 첨부물 업로드" style="background:${bg};
         border-color:var(${col});border-style:${p.done?'solid':'dashed'};opacity:${p.done?1:.45}">
         <span class="rid">${p.run_id}</span><span class="v">${val}</span>${att}</div></td>`;
     });
@@ -235,7 +429,8 @@ function checkboxRow(t){
   const st = (PROGRESS && PROGRESS[String(t.n)]) || {};
   return '<div class="chkrow">'+names.map(nm=>{
     const checked = !!st[nm];
-    return `<label class="chk"><input type="checkbox" disabled ${checked?'checked':''}> ${nm}</label>`;
+    return `<label class="chk" onclick="event.stopPropagation()">
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleProgress(${t.n},'${nm}',this)"> ${nm}</label>`;
   }).join('')+'</div>';
 }
 

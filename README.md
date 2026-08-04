@@ -120,6 +120,27 @@ PROMPT.md       AI 에 붙여넣을 프롬프트 (형식 통일용)
 3. `pip install -r analysis/requirements.txt`
 4. **파이프라인 시험** — Sentaurus 없이 더미 데이터로 전체 흐름 확인 (`analysis/make_dummy_data.py`)
 5. [PROMPT.md](PROMPT.md) 를 자기 AI 도구에 등록
+6. 대시보드에서 체크박스·첨부물 업로드를 쓰려면 **GitHub 연동** — 아래 참고
+
+---
+
+## 대시보드에서 체크·업로드가 실제로 저장되게 하기
+
+대시보드([index.html](index.html))는 정적 페이지라 기본은 읽기 전용이다. 우측 상단 **"GitHub 연동"**
+버튼에서 본인 Personal Access Token 을 등록하면, 체크박스 클릭과 격자 칸 클릭(사진/커브/메모 업로드)이
+GitHub API 로 직접 `analysis/progress.json`·`runs/attachments/` 에 커밋된다.
+
+1. [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new) 에서
+   Fine-grained token 발급 — Repository access 를 `ryu980920/Share` 하나로 지정, Permissions →
+   **Contents: Read and write**
+2. 대시보드의 "GitHub 연동" 버튼에 붙여넣고 저장
+
+토큰은 **이 브라우저(localStorage)에만** 저장되고 서버로 전송되지 않는다. 공용 컴퓨터에서 썼다면
+쓰고 나서 "연동 해제"로 지울 것. 두 사람이 거의 동시에 체크하면 저장이 한 번 실패할 수 있는데,
+자동으로 최신본을 다시 받아 재시도하니 다시 눌러보면 된다.
+
+> 연동 안 해도 대시보드는 그냥 보는 용도로는 문제없다 — `progress.json`을 직접 편집해서
+> commit+push 하는 예전 방식도 여전히 된다.
 
 ---
 
