@@ -55,14 +55,18 @@ def make_run_id(ge, recess):
 # ----------------------------------------------------------------------
 def scan_attachments(run_id, acfg):
     d = ROOT / acfg.get("dir", "runs/attachments") / run_id
-    out = {"has_structure": False, "has_curve": False, "has_notes": False, "notes_preview": ""}
+    out = {"has_structure": False, "has_curve": False, "has_defect": False,
+           "has_notes": False, "n_extra": 0, "notes_preview": ""}
     if not d.is_dir():
         return out
     sfile = d / acfg.get("structure_image", "structure.png")
     cfile = d / acfg.get("curve_image", "idvg_curve.png")
+    dfile = d / acfg.get("defect_image", "defect_check.png")
     nfile = d / acfg.get("notes_file", "notes.md")
     out["has_structure"] = sfile.exists()
     out["has_curve"] = cfile.exists()
+    out["has_defect"] = dfile.exists()
+    out["n_extra"] = len(list(d.glob("extra_*")))
     if nfile.exists():
         out["has_notes"] = True
         try:
@@ -299,7 +303,8 @@ def main():
             if not hit.empty:
                 r = hit.iloc[0]
                 for k in ["stress_GPa", "mobility_gain_pct", "Vth_V", "Ion_A_um",
-                          "has_structure", "has_curve", "has_notes", "notes_preview"]:
+                          "has_structure", "has_curve", "has_defect", "n_extra",
+                          "has_notes", "notes_preview"]:
                     v = r.get(k)
                     if isinstance(v, (bool, str)):
                         rec[k] = v

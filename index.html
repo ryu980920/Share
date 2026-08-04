@@ -187,21 +187,42 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 </div>
 
 <div id="attachModalWrap" class="modalWrap" onclick="if(event.target===this)closeAttachModal()">
-  <div class="smallModal">
+  <div class="smallModal" style="max-width:520px">
     <button class="close" onclick="closeAttachModal()">×</button>
     <h3 id="attachTitle">첨부물</h3>
+    <div id="attachRecommend" class="note" style="margin-top:0;font-style:normal;line-height:1.55"></div>
+
     <div class="attachRow">
-      <label>구조 사진 <code>structure.png</code></label>
-      <input type="file" accept="image/*" id="attachStructure" onchange="uploadAttachFile(this,'structure.png')">
+      <label>소자 구조 사진 <code>structure.png</code> — 리세스/에피 형상이 어떻게 됐는지</label>
+      <input type="file" accept="image/*" id="attachStructure" onchange="uploadAttachFile(this,'structure.png','memoStructure')">
+      <input type="text" id="memoStructure" placeholder="예: Ge% 를 올리며 에피 계면 형상이 어떻게 달라졌는지 (선택 — 적으면 notes.md 에 자동으로 남음)">
       <span class="attachStatus" id="attachStructureStatus"></span>
     </div>
+
     <div class="attachRow">
-      <label>Id-Vg / 응력 프로파일 커브 <code>idvg_curve.png</code></label>
-      <input type="file" accept="image/*" id="attachCurve" onchange="uploadAttachFile(this,'idvg_curve.png')">
+      <label>Id-Vg / 응력 프로파일 커브 <code>idvg_curve.png</code> — 이전 격자점 대비 뭐가 달라졌는지</label>
+      <input type="file" accept="image/*" id="attachCurve" onchange="uploadAttachFile(this,'idvg_curve.png','memoCurve')">
+      <input type="text" id="memoCurve" placeholder="예: baseline 대비 커브가 어떻게 이동했는지, 이동도 개선이 보이는지 (선택)">
       <span class="attachStatus" id="attachCurveStatus"></span>
     </div>
+
+    <div class="attachRow" id="defectRow">
+      <label id="defectLabel">결함(전위) 확인용 단면 사진 <code>defect_check.png</code> — 선택</label>
+      <input type="file" accept="image/*" id="attachDefect" onchange="uploadAttachFile(this,'defect_check.png','memoDefect')">
+      <input type="text" id="memoDefect" placeholder="예: 계면 근처에 전위/결함처럼 보이는 패턴이 있는지 (선택)">
+      <span class="attachStatus" id="attachDefectStatus"></span>
+    </div>
+
     <div class="attachRow">
-      <label>메모 <code>notes.md</code> — 무엇을 바꿨는지 / 이상했던 점 / 다음에 고칠 것</label>
+      <label>기타 자료 — 위 세 가지 외에 남기고 싶은 파일 (메쉬 수렴 그래프, 추가 단면 등)</label>
+      <input type="file" id="attachExtraFile">
+      <input type="text" id="attachExtraMemo" placeholder="이 파일이 뭔지 한 줄로 (필수)">
+      <button onclick="uploadExtraFile()">추가 업로드</button>
+      <div id="attachExtraList" style="margin-top:6px;font-size:11px;color:var(--tx3)"></div>
+    </div>
+
+    <div class="attachRow">
+      <label>전체 메모 <code>notes.md</code> — 위에서 사진과 같이 적은 메모가 자동으로 여기 쌓입니다. 더 적어도 됨</label>
       <textarea id="attachNotes" rows="6" placeholder="불러오는 중…"></textarea>
       <div class="savebar"><button onclick="saveAttachNotes()">메모 저장</button></div>
     </div>
@@ -321,16 +342,43 @@ async function toggleProgress(taskNum,owner,el){
   }
 }
 
+// People-Bean(1985) 임계두께 근사 — contour.py 의 people_bean_tc_nm() 과 동일한 공식.
+// ★주의: 평면(blanket) 기준 근사식이지, fin 구속 보정(Luryi-Suhir)까지 반영한 값은 아니다.
+function peopleBeanTcNm(gePercent){
+  const x=gePercent/100;
+  if(!(x>0)) return Infinity;
+  return 1.23*Math.pow(x,-3.08);
+}
+// 이 격자점에서 뭘 더 챙겨야 하는지 — 사람이 매번 판단하지 않도록 여기서 미리 판단해둔다.
+function attachRecommendHtml(runId){
+  const m=runId.match(/^G([\d.]+)_R([\d.]+)$/i);
+  if(!m) return '항상 구조 사진 + Id-Vg 커브를 같이 올려주세요.';
+  const ge=parseFloat(m[1]), recess=parseFloat(m[2]), tc=peopleBeanTcNm(ge);
+  const ratio=isFinite(tc)&&tc>0 ? recess/tc : null;
+  let html=`<strong>📋 이 격자점(${runId}) 추천</strong><br>`+
+    `People-Bean 근사 임계두께 Tc≈${isFinite(tc)?tc.toFixed(1):'—'}nm (Ge ${ge}%, 평면 가정 — fin 보정 전) — `;
+  if(ratio!==null && ratio>=0.6){
+    html+=`현재 리세스 깊이 ${recess}nm 는 그 <strong>${(ratio*100).toFixed(0)}%</strong>로 임계두께에 근접한 조건입니다. `+
+      `<strong>결함(전위) 확인용 사진을 꼭 올려주세요</strong> — model_choice.md 결론(소성완화 모델 유무)의 육안 증거가 됩니다.`;
+  }else if(ratio!==null){
+    html+=`임계두께 대비 ${(ratio*100).toFixed(0)}% 수준으로 아직 여유 있는 조건입니다. 결함 확인 사진은 선택.`;
+  }else{
+    html+=`Ge%가 확인 안 돼 비교 불가.`;
+  }
+  return html;
+}
+
 // 첨부물 업로드 모달 — 격자 칸 클릭으로 연다.
 let ATTACH_RUN_ID=null;
 function openAttachModal(runId){
   if(!ghToken()){ openTokenModal(); return; }
   ATTACH_RUN_ID=runId;
   document.getElementById('attachTitle').textContent=runId+' 첨부물';
-  document.getElementById('attachStructure').value='';
-  document.getElementById('attachCurve').value='';
-  document.getElementById('attachStructureStatus').textContent='';
-  document.getElementById('attachCurveStatus').textContent='';
+  document.getElementById('attachRecommend').innerHTML=attachRecommendHtml(runId);
+  ['attachStructure','attachCurve','attachDefect','attachExtraFile'].forEach(id=>document.getElementById(id).value='');
+  ['memoStructure','memoCurve','memoDefect','attachExtraMemo'].forEach(id=>document.getElementById(id).value='');
+  ['attachStructureStatus','attachCurveStatus','attachDefectStatus'].forEach(id=>document.getElementById(id).textContent='');
+  document.getElementById('attachExtraList').innerHTML='';
   document.getElementById('attachNotes').value='';
   document.getElementById('attachNotes').placeholder='불러오는 중…';
   document.getElementById('attachModalWrap').classList.add('on');
@@ -338,18 +386,30 @@ function openAttachModal(runId){
     document.getElementById('attachNotes').value = f ? b64ToUtf8(f.content) : '';
     document.getElementById('attachNotes').placeholder='';
   }).catch(e=>{ document.getElementById('attachNotes').placeholder='불러오기 실패: '+e.message; });
-  ['structure.png','idvg_curve.png'].forEach(fn=>{
-    const statusEl=document.getElementById(fn==='structure.png'?'attachStructureStatus':'attachCurveStatus');
-    ghGetFile(`runs/attachments/${runId}/${fn}`).then(f=>{ if(f) statusEl.textContent='✓ 이미 있음 (다시 올리면 교체)'; })
+  const statusMap={'structure.png':'attachStructureStatus','idvg_curve.png':'attachCurveStatus','defect_check.png':'attachDefectStatus'};
+  Object.entries(statusMap).forEach(([fn,elId])=>{
+    ghGetFile(`runs/attachments/${runId}/${fn}`).then(f=>{ if(f) document.getElementById(elId).textContent='✓ 이미 있음 (다시 올리면 교체)'; })
       .catch(()=>{});
   });
 }
 function closeAttachModal(){ document.getElementById('attachModalWrap').classList.remove('on'); }
 
-async function uploadAttachFile(inputEl,filename){
+// notes.md 에 "## 헤더" 섹션을 이어붙인다 — 사진 옆 메모칸에 뭔가 적고 업로드하면 자동 호출됨.
+async function appendNoteSection(runId,header,text){
+  if(!text) return;
+  const path=`runs/attachments/${runId}/notes.md`;
+  const cur=await ghGetFile(path);
+  const base=cur?b64ToUtf8(cur.content):'';
+  const next=base+(base.endsWith('\n')||!base?'':'\n')+`\n## ${header}\n${text}\n`;
+  await ghPutFile(path, utf8ToB64(next), cur?cur.sha:null, `${runId} 메모: ${header}`);
+  if(ATTACH_RUN_ID===runId) document.getElementById('attachNotes').value=next;
+}
+
+const ATTACH_STATUS_ID={'structure.png':'attachStructureStatus','idvg_curve.png':'attachCurveStatus','defect_check.png':'attachDefectStatus'};
+async function uploadAttachFile(inputEl,filename,memoInputId){
   const runId=ATTACH_RUN_ID, file=inputEl.files[0];
   if(!runId||!file) return;
-  const statusEl=document.getElementById(filename==='structure.png'?'attachStructureStatus':'attachCurveStatus');
+  const statusEl=document.getElementById(ATTACH_STATUS_ID[filename]);
   statusEl.textContent='업로드 중…';
   const path=`runs/attachments/${runId}/${filename}`;
   try{
@@ -357,7 +417,35 @@ async function uploadAttachFile(inputEl,filename){
     const cur=await ghGetFile(path);
     await ghPutFile(path,b64,cur?cur.sha:null,`${runId} ${filename} 업로드`);
     statusEl.textContent='✓ 업로드 완료';
+    const memoEl=memoInputId&&document.getElementById(memoInputId);
+    if(memoEl && memoEl.value.trim()){
+      await appendNoteSection(runId, filename+' 메모', memoEl.value.trim());
+      memoEl.value='';
+      statusEl.textContent='✓ 업로드+메모 완료';
+    }
   }catch(e){ statusEl.textContent='실패: '+e.message; }
+}
+
+// 기타 자료 — 정해진 이름 없이 자유롭게 파일+한줄메모를 추가한다.
+async function uploadExtraFile(){
+  const runId=ATTACH_RUN_ID;
+  const fileEl=document.getElementById('attachExtraFile'), memoEl=document.getElementById('attachExtraMemo');
+  const file=fileEl.files[0], memo=memoEl.value.trim();
+  if(!runId) return;
+  if(!file){ alert('파일을 선택할 것'); return; }
+  if(!memo){ alert('이 파일이 뭔지 한 줄 메모는 필수'); return; }
+  const safe=file.name.replace(/[^\w.\-가-힣]/g,'_');
+  const path=`runs/attachments/${runId}/extra_${Date.now()}_${safe}`;
+  const listEl=document.getElementById('attachExtraList');
+  const row=document.createElement('div'); row.textContent=`${file.name} — 업로드 중…`;
+  listEl.appendChild(row);
+  try{
+    const b64=await fileToB64(file);
+    await ghPutFile(path,b64,null,`${runId} 기타자료 업로드: ${file.name}`);
+    await appendNoteSection(runId,'기타 자료: '+file.name, memo);
+    row.textContent=`✓ ${file.name} — ${memo}`;
+    fileEl.value=''; memoEl.value='';
+  }catch(e){ row.textContent=`✗ ${file.name} 실패: ${e.message}`; }
 }
 
 async function saveAttachNotes(){

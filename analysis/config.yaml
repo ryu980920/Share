@@ -72,5 +72,7 @@ attachments:
   dir: "runs/attachments"
   structure_image: "structure.png"
   curve_image: "idvg_curve.png"
+  defect_image: "defect_check.png"   # 선택 — People-Bean 임계두께에 근접한 격자점에서 대시보드가 권장 표시
   notes_file: "notes.md"
   notes_preview_chars: 160     # 대시보드에 미리보기로 보여줄 글자 수
+  # extra_* 로 시작하는 파일은 "기타 자료" — 개수만 status.json 의 n_extra 로 집계된다

@@ -72,8 +72,13 @@ cp -r runs/attachments/_예시 runs/attachments/G30_R50
 | `structure.png` | SDE/SVisual 소자 단면 캡처 | 권장 |
 | `idvg_curve.png` | Id-Vg 또는 응력 프로파일 그래프 | 권장 |
 | `notes.md` | 이 격자점에서 무엇을 바꿨는지, 뭐가 이상했는지, 다음에 고칠 것 | **필수** |
+| `defect_check.png` | 결함(전위) 확인용 단면 사진 | 조건부 권장 — People-Bean 임계두께 근접 조건이면 대시보드가 강조 표시 |
+| `extra_*` | 그 외 자유 자료 (메쉬 수렴 그래프 등, 파일명 자유) | 선택 |
 
 `analysis/build.py` 는 이 파일들의 **존재 여부만** 확인해서 대시보드에 점으로 표시한다 (내용을 읽어서 검증하지는 않는다).
+
+> 직접 `runs/attachments/`에 파일을 두는 대신, [대시보드](https://ryu980920.github.io/Share/)에서 GitHub 연동 후
+> 격자 칸을 클릭해 파일+메모를 바로 올려도 된다 — 어떤 자료가 특히 필요한지도 대시보드가 알려준다.
 
 ```bash
 git add runs/attachments/G30_R50
