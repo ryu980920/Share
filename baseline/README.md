@@ -13,14 +13,12 @@
 | 파일 | 역할 |
 |---|---|
 | `params.yaml` | 모든 수치의 유일한 출처. SDE/SDevice/분석 스크립트가 전부 이걸 참조. Ge%·리세스 깊이 스윕 값은 현재 TODO placeholder (`doe.values_confirmed: false`) |
-| `bcat_sde.scm` | SDE 3D 구조 생성 스크립트. **골격뿐이다.** Synopsys Applications Library `FinFET_14nm`/`FinFET_22nm` 예제를 그대로 복사한 뒤, 리세스 식각 + SiGe 에피택시 단계만 추가하는 지점이 `TODO-RECESS`/`TODO-EPI`로 표시돼 있다 |
-| `bcat_sdevice.cmd` | SDevice 커맨드. 응력/이동도 추출 정의. 소성 완화(전위결함) 모델 탑재 여부를 먼저 확인해야 하는 지점이 `TODO-STRESS-PHYSICS`로 표시돼 있다 |
-
-파일명(`bcat_*`)은 예전 BCAT 프로젝트에서 그대로 넘어온 것으로, 내용은 FinFET/SiGe 용으로 새로 썼다.
+| `finfet_sde.scm` | SDE 3D 구조 생성 스크립트. **골격뿐이다.** Synopsys Applications Library `FinFET_14nm`/`FinFET_22nm` 예제를 그대로 복사한 뒤, 리세스 식각 + SiGe 에피택시 단계만 추가하는 지점이 `TODO-RECESS`/`TODO-EPI`로 표시돼 있다 |
+| `finfet_sdevice.cmd` | SDevice 커맨드. 응력/이동도 추출 정의. 소성 완화(전위결함) 모델 탑재 여부를 먼저 확인해야 하는 지점이 `TODO-STRESS-PHYSICS`로 표시돼 있다 |
 
 ## ⚠️ Phase 0에서 반드시 할 일
 
-**`bcat_sde.scm` 과 `bcat_sdevice.cmd` 는 골격(scaffold)이지, 실제 Sentaurus 문법으로 검증된 스크립트가 아니다.**
+**`finfet_sde.scm` 과 `finfet_sdevice.cmd` 는 골격(scaffold)이지, 실제 Sentaurus 문법으로 검증된 스크립트가 아니다.**
 AI가 실제 Scheme/커맨드 문법을 처음부터 지어내지 않은 이유도 이것 — 설치된 버전의 Applications Library 예제를 열어서 직접 채워야 한다.
 
 - [ ] `FinFET_14nm`/`FinFET_22nm` 예제를 열어 실제 구조(핀 폭·핀 높이·게이트 길이)를 확인하고, Intel 22nm Tri-Gate / PTM 14nm 대응 여부를 대조 (현재는 **파일명 기반 추측, 미검증**)
@@ -40,3 +38,4 @@ AI가 실제 Scheme/커맨드 문법을 처음부터 지어내지 않은 이유�
 | 2026-08-03 | 초기 골격 (BCAT DRAM) | — | — |
 | 2026-08-04 | FinFET + Embedded SiGe S/D 주제로 전환 | 팀 주제 변경 (3인→2인, DBCAT×doping → Ge%×리세스 깊이) | — |
 | 2026-08-04 | 2인→3인 복귀 (주수빈 재합류), 열 분할 2등분→3등분 | 인원 변경 | — |
+| 2026-08-04 | `bcat_sde.scm`/`bcat_sdevice.cmd` → `finfet_sde.scm`/`finfet_sdevice.cmd` 로 파일명 변경 | 예전 BCAT DRAM 프로젝트 파일명이 그대로 남아있어 현재 주제(FinFET)와 안 맞고 혼동을 유발함 — 내용은 이미 FinFET 용으로 재작성돼 있었으나 이름만 안 바뀌어 있었다 | — |

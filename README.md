@@ -106,8 +106,8 @@ index.html      대시보드 (GitHub Pages 루트)
 tasks.js        과제 정의 — 대시보드에서 클릭하면 상세가 뜬다
 baseline/       공통 기준. PR 로만 수정
   params.yaml     모든 수치의 유일한 출처 (Ge%/리세스 깊이 스윕 값 TODO)
-  bcat_sde.scm    SDE 구조 스크립트 ★골격 — FinFET_14nm/22nm 예제 복사 후 리세스+에피 추가 지점만 TODO 표시
-  bcat_sdevice.cmd SDevice 커맨드 ★골격 — 응력/이동도 추출 지점 TODO 표시
+  finfet_sde.scm    SDE 구조 스크립트 ★골격 — FinFET_14nm/22nm 예제 복사 후 리세스+에피 추가 지점만 TODO 표시
+  finfet_sdevice.cmd SDevice 커맨드 ★골격 — 응력/이동도 추출 지점 TODO 표시
 analysis/       공용 스크립트. 지표 정의가 여기 한 곳에만 있다
 runs/           각자의 결과. 자기 폴더만 건드린다
 docs/ROLES.md   역할 분담 · 격자 분할(3인) · 일정

@@ -65,7 +65,7 @@ python analysis/contour.py --all-figures  # 등고선 + 경계선 오버레이 +
 3. 파일명·컬럼명·지표명을 바꾸지 마라. 더 나은 이름이 떠올라도 위 규칙 그대로.
 4. Ge%/리세스 깊이 스윕 범위는 baseline/params.yaml 이 확정하기 전까지 "미확정"
    이라고 명시하고, 절대 임의로 구체적 숫자를 확정된 것처럼 말하지 마라.
-5. baseline/bcat_sde.scm, baseline/bcat_sdevice.cmd 의 Sentaurus 문법(Scheme/커맨드)을
+5. baseline/finfet_sde.scm, baseline/finfet_sdevice.cmd 의 Sentaurus 문법(Scheme/커맨드)을
    내가 실제 매뉴얼로 검증하지 않은 채로 새로 지어내라고 하지 마라. 반드시
    "FinFET_14nm/22nm 예제를 열어서 확인" 을 거치게 하라.
 6. 수렴 실패를 해결하려고 물리 모델을 끄거나 바꾸라고 제안하지 마라.

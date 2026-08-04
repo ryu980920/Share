@@ -2,7 +2,8 @@
 *  FinFET + Embedded SiGe S/D — 응력/이동도 추출 — Sentaurus Device
 *
 *  ★★★ 이 파일도 처음부터 지어낸 게 아니라 TODO 골격이다. ★★★
-*  파일명이 bcat_sdevice.cmd 인 이유는 bcat_sde.scm 과 동일 (레포 구조 재사용).
+*  (2026-08-04: 원래 파일명이 bcat_sdevice.cmd 였으나 예전 BCAT 프로젝트와 무관한
+*  내용인데도 이름만 남아있어 혼동을 줘서 finfet_sdevice.cmd 로 개명함.)
 *
 *  ============================ 시작 방법 ============================
 *  1. FinFET_14nm/22nm 예제의 SDevice 커맨드 파일을 그대로 이 파일 위치에
@@ -23,7 +24,7 @@ File {
 
 * ---------------------------------------------------------------------
 *  TODO-ELECTRODE : 원본 예제의 Electrode 이름/Workfunction 을 그대로 가져올 것.
-*  bcat_sde.scm 의 컨택 이름과 반드시 일치해야 한다.
+*  finfet_sde.scm 의 컨택 이름과 반드시 일치해야 한다.
 * ---------------------------------------------------------------------
 Electrode {
 *  { Name="gate"      Voltage=0.0  Workfunction=??? }   * TODO: params.yaml materials.gate_workfunction_eV 확정 후 반영
