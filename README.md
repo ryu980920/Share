@@ -2,7 +2,7 @@
 
 차세대반도체 경진대회 (소자/공정 부문) · 2인(유용성 · 남다연) · Synopsys Sentaurus TCAD
 
-**📊 [진행 현황 대시보드](https://ryu980920.github.io/Share.github.io/)**
+**📊 [진행 현황 대시보드](https://ryu980920.github.io/Share/)**
 
 ---
 
@@ -148,7 +148,7 @@ GitHub API 로 직접 `analysis/progress.json`·`runs/attachments/` 에 커밋�
 
 **Settings → Pages → Source: `Deploy from a branch` → `main` / `/ (root)`**
 
-배포되면 `https://ryu980920.github.io/Share.github.io/` 로 대시보드가 열린다. `index.html` 이 같은 저장소의 `analysis/status.json` 을 읽으므로 별도 설정이 없다.
+배포되면 `https://ryu980920.github.io/Share/` 로 대시보드가 열린다. `index.html` 이 같은 저장소의 `analysis/status.json` 을 읽으므로 별도 설정이 없다.
 > 이 저장소는 **public** 이다. 대회 요강에 사전 공개 관련 조항이 있는지 한 번 확인할 것.
 > 조항이 있으면 저장소를 private 으로 바꾸고 대시보드는 로컬에서 연다
 > (`python -m http.server 8000` 후 `localhost:8000`).
