@@ -5,7 +5,10 @@ name: update-dashboard
 on:
   push:
     branches: [main]
-    paths: ['runs/**', 'analysis/**', 'baseline/params.yaml']
+    # .md 문서만 고친 push 는 건드리지 않는다 — 안 그러면 문서 수정할 때마다
+    # 이 워크플로가 status.json/grid.csv 를 다시 커밋해서, 곧바로 이어서 push 하면
+    # 매번 "rejected (fetch first)" 가 뜬다.
+    paths: ['runs/**', 'analysis/**', 'baseline/params.yaml', '!**/*.md']
   workflow_dispatch:
 
 permissions:
