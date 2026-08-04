@@ -20,31 +20,35 @@
 
 ---
 
-## 결과 공유는 이렇게 한다 — 3단계
+## 결과 공유는 이렇게 한다 — 딱 세 가지
 
-숫자 데이터와 첨부물(사진·커브·메모)은 올리는 위치가 다르다. 자세한 설명은 [runs/README.md](runs/README.md), 첨부물 폴더 예시는 `runs/attachments/_예시`.
+격자점 하나를 완료하면 올리는 건 이 셋뿐이다: **① CSV(수치) ② 소자 사진(뭐가 달라졌는지 보여주는 것) ③ 대시보드가 알려주는 추천 자료**.
 
-```
-# 1. 수치 데이터 — 자기 이름의 누적 CSV 에 한 줄 추가 (wide 형식)
-#    컬럼: run_id,stress_GPa,mobility_gain_pct
-echo "G30_R50,1.62,18.4" >> runs/유용성_Ge낮은열.csv     # 예시 — 실제로는 Sentaurus 출력값을 넣을 것
+**가장 쉬운 방법 — [대시보드](https://ryu980920.github.io/Share/)에서 바로 올리기.** "GitHub 연동" 후 격자 칸(또는 Run ID 입력)을 클릭하면 사진 업로드 + 메모 작성이 그 자리에서 끝나고, 자동으로 커밋된다. 아래 git 명령을 몰라도 된다.
 
-# 2. 첨부물 — 소자 사진·커브·메모는 run_id 별 폴더에
+<details>
+<summary>git 으로 직접 올리고 싶다면 (선택)</summary>
+
+```bash
+# 1. 수치 데이터 — 자기 이름의 누적 CSV 에 한 줄 추가
+echo "G30_R50,1.62,18.4" >> runs/유용성_Ge낮은열.csv     # 컬럼: run_id,stress_GPa,mobility_gain_pct
+
+# 2. 사진·메모 — run_id 폴더에 (파일명 자유, 여러 장 가능)
 mkdir -p runs/attachments/G30_R50
-cp structure.png runs/attachments/G30_R50/
-cp idvg_curve.png runs/attachments/G30_R50/
+cp 아무사진.png runs/attachments/G30_R50/
 echo "리세스 rate 0.02 로 변경, Ge% 는 baseline 그대로" > runs/attachments/G30_R50/notes.md
 
-# 3. 지표를 정리한다 (★ 손으로 계산하지 않는다)
+# 3. 지표 정리 (★ 손으로 계산하지 않는다) + 올리기
 python analysis/build.py
-
-# 4. 올린다
 git add runs/유용성_Ge낮은열.csv runs/attachments/G30_R50 && git commit -m "G30_R50 완료" && git push
 ```
 
 push 하면 **GitHub Actions 가 알아서** 전체를 다시 병합하고 대시보드를 갱신한다.
+</details>
+
+자세한 설명은 [runs/README.md](runs/README.md).
 > **대용량 파일(`.tdr` `.plt` `.dat`)은 올리지 않는다.** `.gitignore` 가 막고 있다.
-> 연구실 서버나 드라이브에 두고 `run.yaml` 의 `notes` 에 위치만 적는다.
+> 연구실 서버나 드라이브에 두고 `notes.md` 에 위치만 적는다.
 
 ---
 
@@ -127,7 +131,7 @@ PROMPT.md       AI 에 붙여넣을 프롬프트 (형식 통일용)
 ## 대시보드에서 체크·업로드가 실제로 저장되게 하기
 
 대시보드([index.html](index.html))는 정적 페이지라 기본은 읽기 전용이다. 우측 상단 **"GitHub 연동"**
-버튼에서 본인 Personal Access Token 을 등록하면, 체크박스 클릭과 격자 칸 클릭(사진/커브/메모 업로드)이
+버튼에서 본인 Personal Access Token 을 등록하면, 체크박스 클릭과 격자 칸 클릭(사진/메모 업로드)이
 GitHub API 로 직접 `analysis/progress.json`·`runs/attachments/` 에 커밋된다.
 
 1. [github.com/settings/personal-access-tokens/new](https://github.com/settings/personal-access-tokens/new) 에서

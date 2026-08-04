@@ -109,6 +109,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 #tokenBtn{font-size:12px}
 .ghsync{color:var(--tx3);font-size:11px;margin-top:3px}
 .savebar{display:flex;justify-content:flex-end;gap:8px;margin-top:10px}
+.chkstat{font-size:10px;margin-left:2px}
 </style>
 </head>
 <body>
@@ -148,8 +149,13 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     (<span style="color:var(--A)">■ 유용성</span>
      <span style="color:var(--C)">■ 남다연</span>) ·
     채워진 칸 = 완료 · 배경이 밝을수록 응력이 높다 ·
-    칸 우하단 초록 점 = 사진/커브/메모 첨부됨 ·
+    칸 우하단 초록 점 = 사진/메모 첨부됨 ·
     <strong>칸을 클릭하면 첨부물 업로드</strong> (GitHub 연동 필요)</div>
+  <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <span style="color:var(--tx3);font-size:12px">위 격자에 아직 칸이 없어도(= CSV 를 아직 아무도 안 올렸어도) Run ID 를 직접 입력해서 사진·메모를 먼저 올릴 수 있다:</span>
+    <input type="text" id="manualRunId" placeholder="예: G30_R50" style="width:120px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:5px 8px;font-size:12px">
+    <button onclick="openAttachModalManual()">첨부물 열기</button>
+  </div>
 </div>
 
 <div id="tasks"></div>
@@ -187,42 +193,20 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 </div>
 
 <div id="attachModalWrap" class="modalWrap" onclick="if(event.target===this)closeAttachModal()">
-  <div class="smallModal" style="max-width:520px">
+  <div class="smallModal" style="max-width:480px">
     <button class="close" onclick="closeAttachModal()">×</button>
     <h3 id="attachTitle">첨부물</h3>
+
     <div id="attachRecommend" class="note" style="margin-top:0;font-style:normal;line-height:1.55"></div>
 
     <div class="attachRow">
-      <label>소자 구조 사진 <code>structure.png</code> — 리세스/에피 형상이 어떻게 됐는지</label>
-      <input type="file" accept="image/*" id="attachStructure" onchange="uploadAttachFile(this,'structure.png','memoStructure')">
-      <input type="text" id="memoStructure" placeholder="예: Ge% 를 올리며 에피 계면 형상이 어떻게 달라졌는지 (선택 — 적으면 notes.md 에 자동으로 남음)">
-      <span class="attachStatus" id="attachStructureStatus"></span>
+      <label>소자 사진 — Ge%/리세스를 바꾸며 뭐가 달라졌는지 보여주는 사진 (여러 장 가능)</label>
+      <input type="file" accept="image/*" id="attachPhoto" onchange="uploadPhoto(this)">
+      <div id="attachPhotoList" style="margin-top:6px;font-size:11px;color:var(--tx3)"></div>
     </div>
 
     <div class="attachRow">
-      <label>Id-Vg / 응력 프로파일 커브 <code>idvg_curve.png</code> — 이전 격자점 대비 뭐가 달라졌는지</label>
-      <input type="file" accept="image/*" id="attachCurve" onchange="uploadAttachFile(this,'idvg_curve.png','memoCurve')">
-      <input type="text" id="memoCurve" placeholder="예: baseline 대비 커브가 어떻게 이동했는지, 이동도 개선이 보이는지 (선택)">
-      <span class="attachStatus" id="attachCurveStatus"></span>
-    </div>
-
-    <div class="attachRow" id="defectRow">
-      <label id="defectLabel">결함(전위) 확인용 단면 사진 <code>defect_check.png</code> — 선택</label>
-      <input type="file" accept="image/*" id="attachDefect" onchange="uploadAttachFile(this,'defect_check.png','memoDefect')">
-      <input type="text" id="memoDefect" placeholder="예: 계면 근처에 전위/결함처럼 보이는 패턴이 있는지 (선택)">
-      <span class="attachStatus" id="attachDefectStatus"></span>
-    </div>
-
-    <div class="attachRow">
-      <label>기타 자료 — 위 세 가지 외에 남기고 싶은 파일 (메쉬 수렴 그래프, 추가 단면 등)</label>
-      <input type="file" id="attachExtraFile">
-      <input type="text" id="attachExtraMemo" placeholder="이 파일이 뭔지 한 줄로 (필수)">
-      <button onclick="uploadExtraFile()">추가 업로드</button>
-      <div id="attachExtraList" style="margin-top:6px;font-size:11px;color:var(--tx3)"></div>
-    </div>
-
-    <div class="attachRow">
-      <label>전체 메모 <code>notes.md</code> — 위에서 사진과 같이 적은 메모가 자동으로 여기 쌓입니다. 더 적어도 됨</label>
+      <label>메모 <code>notes.md</code> — 무엇을 바꿨는지 / 이상했던 점 / 다음에 고칠 것</label>
       <textarea id="attachNotes" rows="6" placeholder="불러오는 중…"></textarea>
       <div class="savebar"><button onclick="saveAttachNotes()">메모 저장</button></div>
     </div>
@@ -231,7 +215,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 <script src="tasks.js"></script>
 <script>
-let DATA=null, PROGRESS=null;
+let DATA=null, PROGRESS=null, OPEN_MODAL_TASK=null;
 const OC={A:'--A',C:'--C'};
 const OWNER_NAMES=["유용성","남다연"];
 const NAME2OI={};TASKS.forEach(t=>{if(t.oi!=='all')NAME2OI[t.owner]=t.oi;});
@@ -322,10 +306,17 @@ function clearToken(){
 
 // 체크박스 클릭 → analysis/progress.json 을 GitHub API 로 직접 수정+커밋.
 // 두 사람이 거의 동시에 누르면 sha 충돌이 날 수 있어 최신본을 다시 받아 재시도한다.
-async function toggleProgress(taskNum,owner,el){
+// ★ 저장이 끝나기 전에 새로고침하면 그 요청이 취소돼서 안 남는다 — 그래서 "저장 중" 표시를 반드시 보여준다.
+let SAVE_IN_FLIGHT=0;
+window.addEventListener('beforeunload', e=>{
+  if(SAVE_IN_FLIGHT>0){ e.preventDefault(); e.returnValue=''; }
+});
+async function toggleProgress(taskNum,owner,el,statId){
+  const statEl=statId&&document.getElementById(statId);
   if(!ghToken()){ el.checked=!el.checked; openTokenModal(); return; }
   const path='analysis/progress.json', wantChecked=el.checked;
-  el.disabled=true;
+  el.disabled=true; SAVE_IN_FLIGHT++;
+  if(statEl){ statEl.textContent=' 저장 중…(새로고침 금지)'; statEl.style.color='var(--tx3)'; }
   for(let attempt=0;attempt<3;attempt++){
     try{
       const file=await ghGetFile(path);
@@ -334,9 +325,19 @@ async function toggleProgress(taskNum,owner,el){
       data[taskNum][owner]=wantChecked;
       await ghPutFile(path, utf8ToB64(JSON.stringify(data,null,1)+'\n'), file.sha,
         `progress: #${taskNum} ${owner} = ${wantChecked}`);
-      PROGRESS=data; el.disabled=false; return;
+      PROGRESS=data; SAVE_IN_FLIGHT--;
+      if(statEl){ statEl.textContent=' ✓ 저장됨'; statEl.style.color='var(--ok)';
+        setTimeout(()=>{ if(statEl) statEl.textContent=''; },2500); }
+      renderTasks();
+      if(OPEN_MODAL_TASK===taskNum) openM(taskNum);
+      return;
     }catch(e){
-      if(attempt===2){ alert('저장 실패: '+e.message); el.checked=!wantChecked; el.disabled=false; return; }
+      if(attempt===2){
+        SAVE_IN_FLIGHT--;
+        if(statEl){ statEl.textContent=' ✗ 저장 실패'; statEl.style.color='var(--warn)'; }
+        alert('저장 실패: '+e.message+'\n\n체크박스를 다시 눌러보세요. "저장 중" 표시가 없어질 때까지는 새로고침하지 마세요.');
+        el.checked=!wantChecked; el.disabled=false; return;
+      }
       await new Promise(r=>setTimeout(r,400*(attempt+1)));
     }
   }
@@ -349,36 +350,36 @@ function peopleBeanTcNm(gePercent){
   if(!(x>0)) return Infinity;
   return 1.23*Math.pow(x,-3.08);
 }
-// 이 격자점에서 뭘 더 챙겨야 하는지 — 사람이 매번 판단하지 않도록 여기서 미리 판단해둔다.
+// 이 격자점에 뭐가 더 필요할지 — 이 한 줄이 "AI 추천". 업로드를 강제하지 않고 그냥 알려주기만 한다.
 function attachRecommendHtml(runId){
   const m=runId.match(/^G([\d.]+)_R([\d.]+)$/i);
-  if(!m) return '항상 구조 사진 + Id-Vg 커브를 같이 올려주세요.';
+  if(!m) return '📋 추천: 소자 사진(구조든 Id-Vg 커브든)을 하나 이상 남겨주세요.';
   const ge=parseFloat(m[1]), recess=parseFloat(m[2]), tc=peopleBeanTcNm(ge);
   const ratio=isFinite(tc)&&tc>0 ? recess/tc : null;
-  let html=`<strong>📋 이 격자점(${runId}) 추천</strong><br>`+
-    `People-Bean 근사 임계두께 Tc≈${isFinite(tc)?tc.toFixed(1):'—'}nm (Ge ${ge}%, 평면 가정 — fin 보정 전) — `;
   if(ratio!==null && ratio>=0.6){
-    html+=`현재 리세스 깊이 ${recess}nm 는 그 <strong>${(ratio*100).toFixed(0)}%</strong>로 임계두께에 근접한 조건입니다. `+
-      `<strong>결함(전위) 확인용 사진을 꼭 올려주세요</strong> — model_choice.md 결론(소성완화 모델 유무)의 육안 증거가 됩니다.`;
-  }else if(ratio!==null){
-    html+=`임계두께 대비 ${(ratio*100).toFixed(0)}% 수준으로 아직 여유 있는 조건입니다. 결함 확인 사진은 선택.`;
-  }else{
-    html+=`Ge%가 확인 안 돼 비교 불가.`;
+    return `📋 추천: 이 조건(Ge ${ge}%, 리세스 ${recess}nm)은 People-Bean 근사 임계두께(≈${tc.toFixed(1)}nm)의 `+
+      `${(ratio*100).toFixed(0)}%로 근접합니다 — <strong>결함(전위) 흔적이 보이는지 알 수 있는 단면 사진</strong>을 꼭 남겨주세요.`;
   }
-  return html;
+  return `📋 추천: 이 조건은 임계두께 대비 여유 있어 결함 걱정은 적습니다. 구조 변화가 보이는 사진 정도면 충분합니다.`;
 }
 
-// 첨부물 업로드 모달 — 격자 칸 클릭으로 연다.
+// 첨부물 업로드 모달 — 격자 칸 클릭으로 연다. 격자에 칸이 아직 없으면(=CSV 없음) 아래 수동 입력으로도 연다.
+function openAttachModalManual(){
+  const v=document.getElementById('manualRunId').value.trim().toUpperCase();
+  if(!v){ alert('Run ID 를 입력할 것 (예: G30_R50)'); return; }
+  if(!/^G[\d.]+_R[\d.]+$/.test(v)){
+    if(!confirm(`"${v}" 가 G{Ge%}_R{리세스깊이} 형식이 아닌 것 같습니다. 그래도 계속할까요?`)) return;
+  }
+  openAttachModal(v);
+}
 let ATTACH_RUN_ID=null;
 function openAttachModal(runId){
   if(!ghToken()){ openTokenModal(); return; }
   ATTACH_RUN_ID=runId;
   document.getElementById('attachTitle').textContent=runId+' 첨부물';
   document.getElementById('attachRecommend').innerHTML=attachRecommendHtml(runId);
-  ['attachStructure','attachCurve','attachDefect','attachExtraFile'].forEach(id=>document.getElementById(id).value='');
-  ['memoStructure','memoCurve','memoDefect','attachExtraMemo'].forEach(id=>document.getElementById(id).value='');
-  ['attachStructureStatus','attachCurveStatus','attachDefectStatus'].forEach(id=>document.getElementById(id).textContent='');
-  document.getElementById('attachExtraList').innerHTML='';
+  document.getElementById('attachPhoto').value='';
+  document.getElementById('attachPhotoList').textContent='사진 목록 불러오는 중…';
   document.getElementById('attachNotes').value='';
   document.getElementById('attachNotes').placeholder='불러오는 중…';
   document.getElementById('attachModalWrap').classList.add('on');
@@ -386,66 +387,38 @@ function openAttachModal(runId){
     document.getElementById('attachNotes').value = f ? b64ToUtf8(f.content) : '';
     document.getElementById('attachNotes').placeholder='';
   }).catch(e=>{ document.getElementById('attachNotes').placeholder='불러오기 실패: '+e.message; });
-  const statusMap={'structure.png':'attachStructureStatus','idvg_curve.png':'attachCurveStatus','defect_check.png':'attachDefectStatus'};
-  Object.entries(statusMap).forEach(([fn,elId])=>{
-    ghGetFile(`runs/attachments/${runId}/${fn}`).then(f=>{ if(f) document.getElementById(elId).textContent='✓ 이미 있음 (다시 올리면 교체)'; })
-      .catch(()=>{});
-  });
+  refreshPhotoList(runId);
 }
 function closeAttachModal(){ document.getElementById('attachModalWrap').classList.remove('on'); }
 
-// notes.md 에 "## 헤더" 섹션을 이어붙인다 — 사진 옆 메모칸에 뭔가 적고 업로드하면 자동 호출됨.
-async function appendNoteSection(runId,header,text){
-  if(!text) return;
-  const path=`runs/attachments/${runId}/notes.md`;
-  const cur=await ghGetFile(path);
-  const base=cur?b64ToUtf8(cur.content):'';
-  const next=base+(base.endsWith('\n')||!base?'':'\n')+`\n## ${header}\n${text}\n`;
-  await ghPutFile(path, utf8ToB64(next), cur?cur.sha:null, `${runId} 메모: ${header}`);
-  if(ATTACH_RUN_ID===runId) document.getElementById('attachNotes').value=next;
+// 그 run_id 폴더 안의 사진들을 나열한다 (파일명이 뭐든 상관없이 폴더를 그냥 들여다본다).
+async function refreshPhotoList(runId){
+  const listEl=document.getElementById('attachPhotoList');
+  try{
+    const r=await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/runs/attachments/${runId}?ref=${GH_BRANCH}&t=${Date.now()}`,
+      {headers:ghHeaders(),cache:'no-store'});
+    if(r.status===404){ listEl.textContent='아직 올라온 사진 없음'; return; }
+    if(!r.ok) throw new Error(`${r.status} ${await ghErrText(r)}`);
+    const files=(await r.json()).filter(f=>f.type==='file' && f.name!=='notes.md');
+    listEl.textContent = files.length ? ('올라온 사진: '+files.map(f=>f.name).join(', ')) : '아직 올라온 사진 없음';
+  }catch(e){ listEl.textContent='목록 불러오기 실패: '+e.message; }
 }
 
-const ATTACH_STATUS_ID={'structure.png':'attachStructureStatus','idvg_curve.png':'attachCurveStatus','defect_check.png':'attachDefectStatus'};
-async function uploadAttachFile(inputEl,filename,memoInputId){
+// 사진 업로드 — 이름은 그냥 원본 파일명 그대로 쓴다 (겹치면 뒤에 시간 붙여서 안 덮어씀).
+async function uploadPhoto(inputEl){
   const runId=ATTACH_RUN_ID, file=inputEl.files[0];
   if(!runId||!file) return;
-  const statusEl=document.getElementById(ATTACH_STATUS_ID[filename]);
-  statusEl.textContent='업로드 중…';
-  const path=`runs/attachments/${runId}/${filename}`;
+  const listEl=document.getElementById('attachPhotoList');
+  const safe=file.name.replace(/[^\w.\-가-힣]/g,'_');
+  const path=`runs/attachments/${runId}/${safe}`;
+  listEl.textContent='업로드 중…';
   try{
     const b64=await fileToB64(file);
     const cur=await ghGetFile(path);
-    await ghPutFile(path,b64,cur?cur.sha:null,`${runId} ${filename} 업로드`);
-    statusEl.textContent='✓ 업로드 완료';
-    const memoEl=memoInputId&&document.getElementById(memoInputId);
-    if(memoEl && memoEl.value.trim()){
-      await appendNoteSection(runId, filename+' 메모', memoEl.value.trim());
-      memoEl.value='';
-      statusEl.textContent='✓ 업로드+메모 완료';
-    }
-  }catch(e){ statusEl.textContent='실패: '+e.message; }
-}
-
-// 기타 자료 — 정해진 이름 없이 자유롭게 파일+한줄메모를 추가한다.
-async function uploadExtraFile(){
-  const runId=ATTACH_RUN_ID;
-  const fileEl=document.getElementById('attachExtraFile'), memoEl=document.getElementById('attachExtraMemo');
-  const file=fileEl.files[0], memo=memoEl.value.trim();
-  if(!runId) return;
-  if(!file){ alert('파일을 선택할 것'); return; }
-  if(!memo){ alert('이 파일이 뭔지 한 줄 메모는 필수'); return; }
-  const safe=file.name.replace(/[^\w.\-가-힣]/g,'_');
-  const path=`runs/attachments/${runId}/extra_${Date.now()}_${safe}`;
-  const listEl=document.getElementById('attachExtraList');
-  const row=document.createElement('div'); row.textContent=`${file.name} — 업로드 중…`;
-  listEl.appendChild(row);
-  try{
-    const b64=await fileToB64(file);
-    await ghPutFile(path,b64,null,`${runId} 기타자료 업로드: ${file.name}`);
-    await appendNoteSection(runId,'기타 자료: '+file.name, memo);
-    row.textContent=`✓ ${file.name} — ${memo}`;
-    fileEl.value=''; memoEl.value='';
-  }catch(e){ row.textContent=`✗ ${file.name} 실패: ${e.message}`; }
+    await ghPutFile(path,b64,cur?cur.sha:null,`${runId} 사진 업로드: ${safe}`);
+    inputEl.value='';
+    refreshPhotoList(runId);
+  }catch(e){ listEl.textContent='업로드 실패: '+e.message; }
 }
 
 async function saveAttachNotes(){
@@ -528,8 +501,7 @@ function drawGrid(d){
         bg=`hsl(${260-160*t} 55% ${13+22*t}%)`; val=p.stress_GPa.toFixed(2)+'GPa';
       }
       const att=`<span class="att">
-        <span class="dot ${p.has_structure?'on':'off'}" title="구조 사진"></span>
-        <span class="dot ${p.has_curve?'on':'off'}" title="커브"></span>
+        <span class="dot ${p.has_photo?'on':'off'}" title="사진 ${p.n_photos?`(${p.n_photos}장)`:''}"></span>
         <span class="dot ${p.has_notes?'on':'off'}" title="메모"></span>
       </span>`;
       h+=`<td><div class="cell" onclick="openAttachModal('${p.run_id}')"
@@ -542,13 +514,16 @@ function drawGrid(d){
   document.getElementById('gridwrap').innerHTML=h+'</table>';
 }
 
-function checkboxRow(t){
+function checkboxRow(t,scope){
+  scope = scope||'card';
   const names = t.mode==='joint' ? OWNER_NAMES : [t.owner];
   const st = (PROGRESS && PROGRESS[String(t.n)]) || {};
   return '<div class="chkrow">'+names.map(nm=>{
     const checked = !!st[nm];
+    const statId = `chkstat-${scope}-${t.n}-${nm}`;
     return `<label class="chk" onclick="event.stopPropagation()">
-      <input type="checkbox" ${checked?'checked':''} onchange="toggleProgress(${t.n},'${nm}',this)"> ${nm}</label>`;
+      <input type="checkbox" ${checked?'checked':''} onchange="toggleProgress(${t.n},'${nm}',this,'${statId}')"> ${nm}
+      <span class="chkstat" id="${statId}"></span></label>`;
   }).join('')+'</div>';
 }
 
@@ -606,12 +581,13 @@ function openM(n){
   h+='<h4>할 일</h4><ul>'+t.todo.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   h+='<h4>완료 판정 기준</h4><ul>'+t.done.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   if(t.out) h+='<h4>산출물</h4><ul>'+t.out.map(x=>`<li>${x}</li>`).join('')+'</ul>';
-  h+='<h4>진행 체크</h4>'+checkboxRow(t);
+  h+='<h4>진행 체크</h4>'+checkboxRow(t,'modal');
   if(t.warn) h+=`<div class="warn">⚠ ${t.warn}</div>`;
   document.getElementById('modal').innerHTML=h;
   document.getElementById('ov').classList.add('on');
+  OPEN_MODAL_TASK=n;
 }
-function closeM(){document.getElementById('ov').classList.remove('on');}
+function closeM(){document.getElementById('ov').classList.remove('on');OPEN_MODAL_TASK=null;}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeM();});
 boot();
 </script>

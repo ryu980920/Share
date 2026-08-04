@@ -6,7 +6,7 @@ build.py — runs/ 의 스윕 CSV 들을 읽어 지표를 정리하고 격자표
 
 입력  runs/<이름>_<스윕이름>.csv      wide 형식: 한 줄 = 한 격자점
       run_id, stress_GPa, mobility_gain_pct [, Vth_V, Ion_A_um ...]
-      runs/attachments/<run_id>/{structure.png, idvg_curve.png, notes.md}   (선택)
+      runs/attachments/<run_id>/{사진 파일들(파일명 자유), notes.md}   (선택)
 출력  analysis/grid.csv               격자점 하나당 한 줄
       analysis/status.json            대시보드용 (체크리스트 진행률은 progress.json 이 별도)
 
@@ -51,22 +51,18 @@ def make_run_id(ge, recess):
 
 
 # ----------------------------------------------------------------------
-#  첨부물(사진/커브/메모) 스캔 — runs/attachments/<run_id>/
+#  첨부물(사진/메모) 스캔 — runs/attachments/<run_id>/
+#  사진은 이름 상관없이 몇 장이든 올릴 수 있다. notes.md 만 이름이 고정.
 # ----------------------------------------------------------------------
 def scan_attachments(run_id, acfg):
     d = ROOT / acfg.get("dir", "runs/attachments") / run_id
-    out = {"has_structure": False, "has_curve": False, "has_defect": False,
-           "has_notes": False, "n_extra": 0, "notes_preview": ""}
+    out = {"has_photo": False, "n_photos": 0, "has_notes": False, "notes_preview": ""}
     if not d.is_dir():
         return out
-    sfile = d / acfg.get("structure_image", "structure.png")
-    cfile = d / acfg.get("curve_image", "idvg_curve.png")
-    dfile = d / acfg.get("defect_image", "defect_check.png")
     nfile = d / acfg.get("notes_file", "notes.md")
-    out["has_structure"] = sfile.exists()
-    out["has_curve"] = cfile.exists()
-    out["has_defect"] = dfile.exists()
-    out["n_extra"] = len(list(d.glob("extra_*")))
+    photos = [p for p in d.iterdir() if p.is_file() and p.name != nfile.name]
+    out["n_photos"] = len(photos)
+    out["has_photo"] = len(photos) > 0
     if nfile.exists():
         out["has_notes"] = True
         try:
@@ -303,8 +299,7 @@ def main():
             if not hit.empty:
                 r = hit.iloc[0]
                 for k in ["stress_GPa", "mobility_gain_pct", "Vth_V", "Ion_A_um",
-                          "has_structure", "has_curve", "has_defect", "n_extra",
-                          "has_notes", "notes_preview"]:
+                          "has_photo", "n_photos", "has_notes", "notes_preview"]:
                     v = r.get(k)
                     if isinstance(v, (bool, str)):
                         rec[k] = v

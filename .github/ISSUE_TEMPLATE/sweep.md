@@ -8,7 +8,7 @@ labels: []
 ## 담당 / 대상
 
 - 담당자: <!-- 유용성 / 남다연 / 전원 -->
-- 올릴 파일: `runs/<이름>_<스윕이름>.csv` (숫자) + `runs/attachments/<run_id>/` (사진·커브·메모)
+- 올릴 파일: `runs/<이름>_<스윕이름>.csv` (숫자) + `runs/attachments/<run_id>/` (사진·메모)
 - Run ID: <!-- 예: G30_R50 ~ G30_R70 -->
 
 ## 고정 조건 (baseline — 건드리지 않는다)
@@ -37,7 +37,7 @@ labels: []
 - [ ] 격자점 전부 실행 완료
 - [ ] `python analysis/build.py` 에서 경고 없음
 - [ ] `runs/<이름>_<스윕이름>.csv` 에 `run_id,stress_GPa,mobility_gain_pct` 한 줄 추가
-- [ ] `runs/attachments/<run_id>/` 에 구조 사진 · 커브 · notes.md 업로드 (또는 대시보드에서 GitHub 연동 후 직접 업로드)
+- [ ] `runs/attachments/<run_id>/` 에 소자 사진 · notes.md 업로드 (또는 대시보드에서 GitHub 연동 후 직접 업로드)
 - [ ] push 후 대시보드에 반영 확인 (1~2분)
 
 ## 결과
