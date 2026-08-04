@@ -5,6 +5,9 @@ make_dummy_data.py — 가짜 데이터로 파이프라인을 시험한다.
 ★ Sentaurus 결과가 나오기 전에 build.py → contour.py 가 도는지 확인하는 용도.
    여기서 나온 숫자는 물리적 의미가 전혀 없다.
 ★ 실제 데이터를 넣기 전에 반드시 지울 것:  python analysis/make_dummy_data.py --clean
+
+★ x_levels/y_levels 는 baseline/params.yaml 의 값(지금은 placeholder)을 그대로
+  읽어서 쓴다. 실제 스윕 값이 확정되면 자동으로 그 값 기준으로 더미가 생성된다.
 """
 
 import argparse
@@ -18,28 +21,19 @@ ROOT = Path(__file__).resolve().parent.parent
 RUNS = ROOT / "runs"
 PARAMS = ROOT / "baseline" / "params.yaml"
 
-# 담당자 → 맡은 DBCAT 열
-OWNERS = {"유용성": [24, 30], "주수빈": [36, 42], "남다연": [48]}
+# 담당자 → 맡은 Ge% 열 (params.yaml 의 x_levels 를 절반씩 나눠 채움)
+OWNERS = ["유용성", "남다연"]
 
 
-def synth(d_nm, nmult, rng):
-    vg = np.arange(-1.0, 2.801, 0.05)
-    d = (d_nm - 36.0) / 12.0
-    n = (nmult - 0.65) / 0.35
-    gidl_ref = 10 ** (-12.0 - 0.60 * d + 0.90 * n + 0.40 * d * n)   # 교호작용 +0.40 삽입
-    gidl = np.where(vg < 0.3, gidl_ref * 10 ** (2.2 * (-vg - 0.5)), 0.0)
-
-    vth = 0.45 + 0.05 * d + 0.08 * n
-    ss = 0.075 + 0.004 * d
-
-    def ch(vt):
-        sub = 1e-7 * 10 ** ((vg - vt) / ss)
-        on = 3e-5 * np.clip(vg - vt, 0, None)
-        return 1.0 / (1.0 / sub + 1.0 / np.where(on > 0, on, np.inf))
-
-    noise = 1 + rng.normal(0, 0.005, vg.shape)
-    return vg, np.abs((0.14 * ch(vth) + 0.12 * gidl) * noise), \
-           np.abs((ch(vth - 0.030 - 0.010 * d) + gidl) * noise)
+def synth_point(ge_pct, recess_nm, rng):
+    """단순 합성 모델. 교호작용(+0.35) 을 일부러 심어서 contour.py 가 시너지로 판정하게 한다."""
+    x = (ge_pct - 30.0) / 10.0
+    y = (recess_nm - 50.0) / 20.0
+    stress = 1.4 + 0.55 * x + 0.35 * y + 0.35 * x * y            # GPa, 교호작용 삽입
+    mobility_gain = 15.0 + 6.0 * x + 4.0 * y + 3.0 * x * y        # %
+    noise_s = rng.normal(0, 0.03)
+    noise_m = rng.normal(0, 0.4)
+    return max(stress + noise_s, 0.01), mobility_gain + noise_m
 
 
 def main():
@@ -58,25 +52,33 @@ def main():
         return 0
 
     doe = yaml.safe_load(open(PARAMS, encoding="utf-8"))["doe"]
+    xl = [float(v) for v in doe["x_levels"]]
+    yl = [float(v) for v in doe["y_levels"]]
+    if not doe.get("values_confirmed", False):
+        print("[알림] doe.values_confirmed=false — 지금 x_levels/y_levels 는 placeholder 다.")
+        print("       더미는 그 placeholder 값 기준으로 만들어진다 (파이프라인 시험용이므로 무방).")
+
+    half = len(xl) // 2 or 1
+    cols_by_owner = {OWNERS[0]: xl[:half] or xl[:1], OWNERS[1]: xl[half:] or xl[-1:]}
+
     rng = np.random.default_rng(42)
     made = 0
-    for owner, cols in OWNERS.items():
-        for d in cols:
-            if float(d) not in [float(v) for v in doe["x_levels"]]:
-                continue
-            path = RUNS / f"{owner}_D{d}.csv"
-            with open(path, "w", encoding="utf-8") as f:
-                f.write("# DUMMY — 파이프라인 시험용. 실제 결과 아님\n")
-                f.write("run_id,Vg,Id_lin,Id_sat\n")
-                for nm in doe["y_levels"]:
-                    rid = f"D{int(d)}_N{int(round(float(nm)*100)):03d}"
-                    vg, il, isat = synth(float(d), float(nm), rng)
-                    for v, b, c in zip(vg, il, isat):
-                        f.write(f"{rid},{v:.4f},{b:.6e},{c:.6e}\n")
-            made += 1
-            print(f"  생성: runs/{path.name}")
+    for owner, cols in cols_by_owner.items():
+        path = RUNS / f"{owner}_dummy.csv"
+        with open(path, "w", encoding="utf-8") as f:
+            f.write("# DUMMY — 파이프라인 시험용. 실제 결과 아님\n")
+            f.write("run_id,stress_GPa,mobility_gain_pct\n")
+            for g in cols:
+                for r in yl:
+                    rid = f"G{int(round(g))}_R{int(round(r))}"
+                    stress, mob = synth_point(float(g), float(r), rng)
+                    f.write(f"{rid},{stress:.4f},{mob:.4f}\n")
+        made += 1
+        print(f"  생성: runs/{path.name}")
+
     print(f"\n더미 {made}개 파일 생성")
     print("다음: python analysis/build.py  →  python analysis/contour.py --all-figures")
+    print("(회귀 판정이 '(b) 시너지' 로 나오면 정상 — 더미에 교호작용을 심어뒀다)")
     return 0
 
 

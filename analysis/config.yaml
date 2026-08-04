@@ -2,60 +2,75 @@
 #  지표 추출 기준 — 이 파일이 지표 정의의 유일한 출처
 #
 #  ★ 왜 이 파일이 중요한가
-#    Vth 를 "Id = 1e-7 A/um 지점"으로 잡는 사람과 "선형 외삽"으로 잡는 사람이
+#    응력을 "피크값"으로 잡는 사람과 "채널 중심 평균값"으로 잡는 사람이
 #    섞이면, 등고선의 굴곡이 물리가 아니라 정의 차이 때문에 생긴다.
 #    그 오류는 그림만 봐서는 절대 발견되지 않는다.
-#    → 지표는 전원이 extract.py 로만 뽑는다. 손계산 금지.
+#    → 지표는 전원이 build.py 로만 뽑는다. 손계산 금지.
 #
-#  ★ 수정하려면 PR + 2인 승인. 수정 시 모든 격자점을 재추출해야 한다:
-#       python analysis/extract.py --all
+#  ★ 수정하려면 PR + 1인 승인. 수정 시 모든 격자점을 재추출해야 한다.
+#
+#  ⚠ 아래 stress/mobility 섹션의 extraction_note 는 전부 TODO다.
+#    Sentaurus Device 의 실제 Plot 변수/파일 형식을 Phase 0에서 확인한 뒤
+#    build.py 의 파싱 로직과 함께 확정할 것 (지금은 방향만 잡아둔 것).
 # =====================================================================
 
+stress:
+  # ★ 이 프로젝트의 주 지표 중 하나.
+  metric_name: "stress_GPa"
+  definition: "채널 방향(주로 압축) 응력 텐서 성분 — 어느 성분(xx/yy/zz)을 볼지 TODO"
+  extraction_point: "TODO — 채널 표면 중심? 전체 채널 부피 평균? Phase 0에서 확정"
+  reference: "무변형(Ge%=0 또는 리세스 없음) 구조 대비 상대값이 아니라 절대 응력값(GPa)"
+
+mobility:
+  # ★ 이 프로젝트의 주 지표 중 하나. 응력이 정공 이동도에 미치는 영향.
+  metric_name: "mobility_gain_pct"
+  definition: "정공 이동도가 무변형 baseline 대비 몇 % 향상됐는지"
+  baseline_reference: "Ge_percent=0 (SiGe 미적용) 구조의 정공 이동도"
+  extraction_note: "TODO — SDevice Plot 의 eMobility/hMobility 에서 정확히 어떻게 대표값을 뽑을지 확정"
+
+# --- 보조 지표 (헤드라인 아님, 필요시만) --------------------------------
 vth:
-  method: "constant_current"     # constant_current | linear_extrapolation
-  I_crit_A_per_um: 1.0e-7        # 이 전류에 도달하는 Vg 를 Vth 로 정의
-
-ss:
-  # 서브스레숄드 스윙: 이 전류 구간에서 log10(Id) vs Vg 기울기의 역수 [mV/dec]
-  fit_I_min_A_per_um: 1.0e-12
-  fit_I_max_A_per_um: 1.0e-9
-  use_min_slope: true            # 구간 내 최소 SS(=최급 기울기)를 채택
-
-dibl:
-  # DIBL = (Vth_lin - Vth_sat) / (Vd_sat - Vd_lin)  [mV/V]
-  Vd_lin: 0.1
-  Vd_sat: 1.0
-
-gidl:
-  # ★ 이 프로젝트의 주 지표.
-  #   Vd = Vd_sat, Vg = V_gidl 에서의 드레인 전류를 GIDL 로 정의한다.
-  #   V_gidl 는 실제 DRAM 의 워드라인 오프 전압(VBBW) 을 모사한 값.
-  V_gidl: -0.5
-  # 보조 지표: Vg < 0 구간 전체에서의 최대 전류 (측정점 선택 민감도 확인용)
-  report_max_negative: true
+  method: "constant_current"
+  I_crit_A_per_um: 1.0e-7
 
 ion:
-  Vg: 2.8          # VPP
-  Vd: "sat"
+  Vg: "TODO"      # baseline/params.yaml bias 확정 후 채울 것
+  Vd: "TODO"
 
-ioff:
-  Vg: 0.0
-  Vd: "sat"
+# =====================================================================
+#  임계두께 경계선 — baseline/params.yaml 의 critical_thickness 를 그대로 참조
+#  (이 파일에 값을 중복해서 적지 않는다 — 단일 출처 원칙)
+# =====================================================================
+boundary_overlay:
+  enabled: true
+  source: "baseline/params.yaml#critical_thickness"
+  lines:
+    - "people_bean_1985"
+    - "luryi_suhir_1986"
 
 # =====================================================================
 #  Sentaurus Workbench 변수표를 그대로 쓸 때의 매핑
 #
 #  SWB 에서 Export Variables 로 CSV 를 뽑으면 build.py 가 자동 인식한다.
 #  아래 이름들이 SWB 의 파라미터/변수 이름과 일치해야 한다.
-#  (SWB 쪽 이름을 바꾸거나, 여기를 SWB 이름에 맞추거나 — 둘 중 하나)
 # =====================================================================
 swb:
-  x_param: "DBCAT"        # 질화막 두께 [nm]  — SWB 파라미터 이름
-  y_param: "Nmult"        # S/D 도핑 배수 [-] — SWB 파라미터 이름
-  map:                    # 우리 지표 이름 : SWB 추출변수 이름
-    Vth_lin_V:   "VtLin"
-    Vth_sat_V:   "Vtgm"
-    Ion_A_um:    "IdSat"
-    Ioff_A_um:   "Ioff"
-    I_GIDL_A_um: "Igidl"  # ★ SWB 에 아직 없다. 반드시 추가할 것 (아래 참고)
-    T_RET_s:     "T_RET"
+  x_param: "GePercent"      # Ge 조성 [%] — SWB 파라미터 이름 (bcat_sde.scm 의 @GePercent@ 와 일치)
+  y_param: "Recess_nm"      # 리세스 깊이 [nm] — SWB 파라미터 이름 (bcat_sde.scm 의 @Recess_nm@ 와 일치)
+  map:                      # 우리 지표 이름 : SWB 추출변수 이름 (TODO — SDevice 에서 실제로 추출 가능한 변수명 확인 필요)
+    stress_GPa:        "Stress"        # ★ SWB 에 아직 없다. Phase 0에서 추가할 것
+    mobility_gain_pct: "MobilityGain"  # ★ SWB 에 아직 없다. Phase 0에서 추가할 것
+    Vth_V:             "Vth"
+    Ion_A_um:          "IdSat"
+
+# =====================================================================
+#  첨부물(사진/커브/메모) — runs/attachments/<run_id>/ 규칙
+#  build.py 가 파일 존재 여부만 확인해 status.json 에 표시한다.
+#  (docs/ROLES.md 3절 참고)
+# =====================================================================
+attachments:
+  dir: "runs/attachments"
+  structure_image: "structure.png"
+  curve_image: "idvg_curve.png"
+  notes_file: "notes.md"
+  notes_preview_chars: 160     # 대시보드에 미리보기로 보여줄 글자 수
