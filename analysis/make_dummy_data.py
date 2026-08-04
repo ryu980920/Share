@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parent.parent
 RUNS = ROOT / "runs"
 PARAMS = ROOT / "baseline" / "params.yaml"
 
-# 담당자 → 맡은 Ge% 열 (params.yaml 의 x_levels 를 절반씩 나눠 채움)
-OWNERS = ["유용성", "남다연"]
+# 담당자 → 맡은 Ge% 열 (params.yaml 의 x_levels 를 3등분해서 낮은/중간/높은 순으로 채움)
+OWNERS = ["유용성", "주수빈", "남다연"]
 
 
 def synth_point(ge_pct, recess_nm, rng):
@@ -58,8 +58,16 @@ def main():
         print("[알림] doe.values_confirmed=false — 지금 x_levels/y_levels 는 placeholder 다.")
         print("       더미는 그 placeholder 값 기준으로 만들어진다 (파이프라인 시험용이므로 무방).")
 
-    half = len(xl) // 2 or 1
-    cols_by_owner = {OWNERS[0]: xl[:half] or xl[:1], OWNERS[1]: xl[half:] or xl[-1:]}
+    # 낮은→높은 순서를 유지한 채 거의 균등한 3덩어리로 자른다 (contiguous, np.array_split 과 동일한 방식).
+    n = len(OWNERS)
+    q, rem = divmod(len(xl), n)
+    chunks, start = [], 0
+    for i in range(n):
+        size = q + (1 if i < rem else 0)
+        chunk = xl[start:start + size] or xl[-1:]
+        chunks.append(chunk)
+        start += size
+    cols_by_owner = dict(zip(OWNERS, chunks))
 
     rng = np.random.default_rng(42)
     made = 0

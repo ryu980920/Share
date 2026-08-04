@@ -9,7 +9,7 @@
 - [ ] `python analysis/build.py` 를 돌려 경고가 없었다
 - [ ] `.tdr` / `.plt` 같은 대용량 원본을 커밋하지 않았다
 - [ ] `runs/attachments/<run_id>/` 에 소자 사진·notes.md 를 올렸다 (공동 과제면 생략 가능)
-- [ ] `baseline/` 을 건드리지 않았다 (건드렸다면 → 다른 팀원 1명 리뷰 필요)
+- [ ] `baseline/` 을 건드리지 않았다 (건드렸다면 → 다른 팀원 2명 리뷰 필요)
 
 ## 결과 요약
 

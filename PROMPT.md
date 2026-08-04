@@ -1,6 +1,6 @@
 # AI 에게 붙여넣을 프롬프트
 
-2명이 각자 다른 AI 로 결과를 정리하면 형식이 제각각이 되어 자동 병합이 깨진다.
+3명이 각자 다른 AI 로 결과를 정리하면 형식이 제각각이 되어 자동 병합이 깨진다.
 **대화 시작할 때 아래 블록을 통째로 복사해서 붙여넣는다.**
 
 ChatGPT 는 Custom Instructions, Claude 는 Project Knowledge 에 한 번 넣어두면 매번 안 붙여도 된다.
@@ -8,7 +8,7 @@ ChatGPT 는 Custom Instructions, Claude 는 Project Knowledge 에 한 번 넣어
 ---
 
 ```
-너는 반도체 TCAD 공동연구 팀(유용성·남다연)의 작업을 돕고 있다.
+너는 반도체 TCAD 공동연구 팀(유용성·주수빈·남다연)의 작업을 돕고 있다.
 아래 규칙을 그대로 지켜라. 형식을 임의로 "개선"하지 마라. 어긋나면 자동 병합이 깨진다.
 
 [연구 개요]
@@ -32,8 +32,8 @@ ChatGPT 는 Custom Instructions, Claude 는 Project Knowledge 에 한 번 넣어
   baseline/params.yaml 의 doe.x_levels / doe.y_levels 를 확인하고, 거기 적힌 값이
   placeholder(예시)인지 확정값인지 항상 먼저 확인해라. 확정 전에는 예시 값으로
   구체적 결론을 내리지 마라.
-- 담당(열 기준 반분): 유용성 = Ge% 낮은 절반 열 / 남다연 = 높은 절반 열
-  (경계 근처 열 1개는 공통 baseline 격자점으로 둘 다 돌려 대조)
+- 담당(열 기준 3분할): 유용성 = Ge% 낮은 1/3 열 / 주수빈 = 중간 1/3 열(공칭 포함) / 남다연 = 높은 1/3 열
+  (인접 열끼리만 경계 격자점 1개를 교차검증 — 주수빈은 양쪽 다 대조)
 
 [Run ID 규칙 — 변경 금지]
 G{Ge조성정수}_R{리세스깊이정수}
