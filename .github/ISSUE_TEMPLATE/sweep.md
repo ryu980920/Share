@@ -7,30 +7,27 @@ labels: []
 
 ## 담당 / 대상
 
-- 담당자: <!-- 유용성 / 주수빈 / 남다연 / 전원 -->
-- 올릴 파일: `runs/<이름>_<스윕이름>.csv`
-- Run ID: <!-- 예: D24_N030 ~ D24_N100 -->
+- 담당자: <!-- 유용성 / 남다연 / 전원 -->
+- 올릴 파일: `runs/<이름>_<스윕이름>.csv` (숫자) + `runs/attachments/<run_id>/` (사진·커브·메모)
+- Run ID: <!-- 예: G30_R50 ~ G30_R70 -->
 
 ## 고정 조건 (baseline — 건드리지 않는다)
 
-`baseline/params.yaml` 그대로. 확인용 요약:
+`baseline/params.yaml` 그대로. ⚠ Ge%/리세스 깊이 스윕 값은 아직 TODO — Phase 0(#1~#5 과제) 완료 전에는
+이 표를 확정된 값으로 채우지 말 것.
 
 | 항목 | 값 |
 |---|---|
-| Lgate | 20 nm |
-| 리세스 깊이 | 120 nm |
-| 게이트 산화막 | 5 nm |
-| 게이트 일함수 | 4.8 eV (W) |
-| BTBT 모델 | NonlocalPath |
-| Vd (선형/포화) | 0.1 V / 1.0 V |
-| Vg 스윕 | -1.0 → +2.8 V, 0.05 V step |
+| 베이스라인 출처 | Synopsys Applications Library `FinFET_14nm`/`FinFET_22nm` 예제 (대응 관계 미검증) |
+| 게이트 길이 등 구조 | `baseline/params.yaml` 참고 (일부 TODO) |
+| 결함 모델 가정 | Sentaurus Stress 섹션에 소성완화 모델 없음으로 가정 (검증 전, `docs/model_choice.md` 참고) |
 
 ## 이번에 바꾸는 것
 
 | 변수 | 값 | baseline 대비 |
 |---|---|---|
-| DBCAT | ___ nm | |
-| S/D 도핑 배수 | ×___ | |
+| Ge 조성 [%] | ___ % | |
+| 리세스 깊이 [nm] | ___ nm | |
 
 > 다른 값을 함께 바꾸면 두 변수의 효과가 섞여 그 격자점은 버려야 한다.
 > 수렴 때문에 어쩔 수 없이 바꿨다면 이 Issue 에 전부 적을 것.
@@ -39,13 +36,14 @@ labels: []
 
 - [ ] 격자점 전부 실행 완료
 - [ ] `python analysis/build.py` 에서 경고 없음
-- [ ] GIDL 구간(Vg < 0)에서 전류가 증가하는 형태가 보임 — 안 보이면 BTBT 가 안 켜진 것
-- [ ] push 후 대시보드에 반영 확인
+- [ ] `runs/<이름>_<스윕이름>.csv` 에 `run_id,stress_GPa,mobility_gain_pct` 한 줄 추가
+- [ ] `runs/attachments/<run_id>/` 에 구조 사진 · 커브 · notes.md 업로드 (또는 대시보드에서 GitHub 연동 후 직접 업로드)
+- [ ] push 후 대시보드에 반영 확인 (1~2분)
 
 ## 결과
 
-| Run ID | I_GIDL [A/µm] | Vth_sat [V] | SS [mV/dec] | Ion [A/µm] |
-|---|---|---|---|---|
-|  |  |  |  |  |
+| Run ID | stress_GPa | mobility_gain_pct |
+|---|---|---|
+|  |  |  |
 
 한 줄 소견:

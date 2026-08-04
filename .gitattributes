@@ -1,0 +1,5 @@
+# 줄바꿈(CRLF/LF) 통일 — Windows/Mac 섞여 써도 커밋마다 전체 diff 나는 문제 방지
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary

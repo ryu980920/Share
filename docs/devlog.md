@@ -61,3 +61,20 @@
 - **무엇을**: A/B/C 를 유용성 / 주수빈 / 남다연 으로 교체
 - **왜**: 익명 라벨은 "내 일"이라는 감각을 만들지 못한다. 대시보드에서 자기 이름을 찾는 게 빠르다.
 - **누가**: 유용성
+
+## 2026-08-04 — 프로젝트 주제를 BCAT DRAM → FinFET + Embedded SiGe S/D 로 전환
+
+- **무엇을**: 이 로그의 이전 항목들이 다루는 BCAT×doping GIDL 최적화 프로젝트를 폐기하고,
+  FinFET + Embedded SiGe Source/Drain 응력공학(Ge 조성 × 리세스 깊이, 결함 발생 경계 지도)으로
+  주제를 전환. 주수빈 팀원 이탈로 3인 → 2인(유용성·남다연) 체제로 축소.
+  README/PROMPT/ROLES/baseline/analysis/runs/index.html/tasks.js 전체를 새 주제로 재작성.
+- **왜**: 팀 구성 변경과 주제 재선정이 별도 대화에서 먼저 결정됐고, 그 결정을 레포에 반영.
+  DoE 축(구조 변수 × 도핑배수 → Ge% × 리세스 깊이), 목표(최적화 → 결함 경계 트레이드오프 지도),
+  베이스라인(논문 재현 → Synopsys 예제, 대응관계 미검증 명시)이 모두 바뀌었다.
+- **부수 효과**: `runs/`의 결과 공유 방식(스윕 CSV 한 장 + SWB 변수표 자동 인식)은 그대로 유지 —
+  이 부분은 주제와 무관하게 유효한 설계였음. 다만 지표가 GIDL/Vth/SS/DIBL 계열에서
+  stress_GPa/mobility_gain_pct(wide-format, 격자점당 한 줄)로 바뀌어 `build.py`의 곡선 보간 로직은
+  전부 제거하고 단순 집계로 교체. 결과 제출에 소자 사진·Id-Vg 커브·메모 첨부(`runs/attachments/`)와
+  대시보드 체크박스 진행상황(`analysis/progress.json`)이 새로 추가됨. 이전 방식(`runs/_template`,
+  `적용하기.sh` 등 과거 마이그레이션 스크립트)은 정리.
+- **누가**: 유용성 (AI 도구와 함께 레포 재작성)
