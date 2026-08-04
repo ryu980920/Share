@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BCAT TCAD — Run Sheet</title>
+<title>FinFET SiGe eS/D — Run Sheet</title>
 <style>
 :root{--bg:#0d1117;--panel:#161b22;--panel2:#1c2230;--line:#2a3441;
   --tx:#e6edf3;--tx2:#9aa7b4;--tx3:#6b7785;
-  --A:#58a6ff;--B:#3fb950;--C:#d29922;--all:#a371f7;--warn:#f85149;--ok:#3fb950}
+  --A:#58a6ff;--C:#d29922;--all:#a371f7;--warn:#f85149;--ok:#3fb950}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font-size:14px;line-height:1.6;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Malgun Gothic",sans-serif}
@@ -17,10 +17,10 @@ h1{font-size:21px;margin:0 0 4px}
 .sub{color:var(--tx2);font-size:13px}
 .badge{display:inline-block;padding:1px 8px;border-radius:10px;font-size:11px;font-weight:600}
 .bA{background:rgba(88,166,255,.15);color:var(--A)}
-.bB{background:rgba(63,185,80,.15);color:var(--B)}
 .bC{background:rgba(210,153,34,.15);color:var(--C)}
 .ball{background:rgba(163,113,247,.15);color:var(--all)}
 .bflag{background:rgba(248,81,73,.15);color:var(--warn)}
+.bwarn2{background:rgba(248,81,73,.12);color:#ffa198;font-size:10px;padding:1px 6px;border-radius:8px;margin-left:5px}
 #src{background:var(--panel);border:1px solid var(--line);border-radius:8px;
   padding:13px 16px;margin-bottom:20px;font-size:13px}
 #src .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
@@ -37,23 +37,30 @@ button:hover{border-color:var(--A)}
 table.grid{border-collapse:collapse;font-size:12px}
 table.grid th{color:var(--tx3);font-weight:500;padding:5px 9px;white-space:nowrap}
 table.grid td{padding:0;text-align:center}
-.cell{width:80px;height:46px;border-radius:5px;margin:2px;display:flex;flex-direction:column;
-  align-items:center;justify-content:center;border:1px solid var(--line);font-size:10px;line-height:1.25}
+.cell{width:84px;height:52px;border-radius:5px;margin:2px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border:1px solid var(--line);font-size:10px;line-height:1.25;position:relative}
 .cell .rid{font-weight:600}
 .cell .v{color:var(--tx3);font-size:9px}
+.cell .att{position:absolute;bottom:3px;right:4px;display:flex;gap:2px}
+.dot{width:5px;height:5px;border-radius:50%}
+.dot.on{background:var(--ok)}
+.dot.off{background:var(--tx3);opacity:.35}
 .legend{color:var(--tx3);font-size:11px;margin-top:10px}
 h2{font-size:14px;color:var(--tx2);margin:24px 0 10px;font-weight:600}
 .ph{color:var(--tx3);font-weight:400;font-size:12px;margin-left:8px}
-.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(265px,1fr));gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(275px,1fr));gap:10px}
 .card{background:var(--panel);border:1px solid var(--line);border-left-width:3px;border-radius:8px;
-  padding:12px 14px;cursor:pointer;transition:.12s}
-.card:hover{background:var(--panel2);transform:translateY(-1px)}
-.card.oA{border-left-color:var(--A)}.card.oB{border-left-color:var(--B)}
-.card.oC{border-left-color:var(--C)}.card.oall{border-left-color:var(--all)}
-.card .t{font-weight:600;margin:6px 0 4px}
+  padding:12px 14px;transition:.12s}
+.card:hover{background:var(--panel2)}
+.card.oA{border-left-color:var(--A)}.card.oC{border-left-color:var(--C)}.card.oall{border-left-color:var(--all)}
+.card .t{font-weight:600;margin:6px 0 4px;cursor:pointer}
+.card .t:hover{text-decoration:underline}
 .card .p{color:var(--tx3);font-size:12px;display:-webkit-box;-webkit-line-clamp:2;
-  -webkit-box-orient:vertical;overflow:hidden}
+  -webkit-box-orient:vertical;overflow:hidden;cursor:pointer}
 .card .num{color:var(--tx3);font-size:11px}
+.chkrow{display:flex;gap:12px;margin-top:9px;padding-top:8px;border-top:1px solid var(--line);flex-wrap:wrap}
+.chk{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--tx2);cursor:default}
+.chk input{accent-color:var(--ok)}
 #ov{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;align-items:flex-start;
   justify-content:center;padding:40px 16px;overflow-y:auto;z-index:50}
 #ov.on{display:flex}
@@ -71,6 +78,10 @@ h2{font-size:14px;color:var(--tx2);margin:24px 0 10px;font-weight:600}
 .note{color:var(--tx3);font-size:12px;margin-top:9px;font-style:italic}
 .warn{background:rgba(248,81,73,.08);border:1px solid rgba(248,81,73,.3);border-radius:7px;
   padding:10px 13px;color:#ffa198;font-size:13px;margin-top:14px}
+.impact{background:rgba(63,185,80,.07);border:1px solid rgba(63,185,80,.25);border-radius:7px;
+  padding:10px 13px;color:#8fdf9f;font-size:13px}
+.change{background:rgba(88,166,255,.08);border:1px solid rgba(88,166,255,.25);border-radius:7px;
+  padding:10px 13px;color:#a9d3ff;font-size:13px}
 .rid2{display:inline-block;background:var(--bg);border:1px solid var(--line);border-radius:4px;
   padding:2px 7px;margin:3px 4px 0 0;font-size:11px;font-family:ui-monospace,Menlo,monospace}
 .fileline{margin-top:11px;padding-top:10px;border-top:1px solid var(--line);font-size:12px}
@@ -83,8 +94,8 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 <div class="wrap">
 
 <header>
-  <h1>BCAT — DBCAT × Elevated S/D 결합 최적화</h1>
-  <div class="sub">차세대반도체 경진대회 · 유용성 · 주수빈 · 남다연 · 5×5 DoE
+  <h1>FinFET + Embedded SiGe S/D — 응력공학</h1>
+  <div class="sub">차세대반도체 경진대회 · 유용성 · 남다연 · Ge% x 리세스 깊이 DoE
     &nbsp;·&nbsp; <span id="gen">데이터 없음</span></div>
 </header>
 
@@ -96,6 +107,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     <button onclick="document.getElementById('file').click()">status.json 직접 열기</button>
   </div>
   <div id="srcmsg"></div>
+  <div id="confirmmsg" style="margin-top:6px"></div>
 </div>
 
 <div class="stats">
@@ -107,22 +119,23 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 <div class="gridbox">
   <div style="font-weight:600;margin-bottom:10px">DoE 격자
-    <span class="ph">가로 = DBCAT [nm] · 세로 = 도핑 배수</span></div>
+    <span class="ph">가로 = Ge 조성 [%] · 세로 = 리세스 깊이 [nm] · 색 = stress_GPa</span></div>
   <div id="gridwrap"><div style="color:var(--tx3);font-size:13px">
-    결과가 올라오면 25개 격자점의 상태와 GIDL 값이 여기 표시됩니다.</div></div>
+    결과가 올라오면 격자점의 상태와 응력 값이 여기 표시됩니다.</div></div>
   <div class="legend">테두리 색 = 담당자
     (<span style="color:var(--A)">■ 유용성</span>
-     <span style="color:var(--B)">■ 주수빈</span>
      <span style="color:var(--C)">■ 남다연</span>) ·
-    채워진 칸 = 완료 · 배경이 어두울수록 GIDL 이 낮다(좋다)</div>
+    채워진 칸 = 완료 · 배경이 밝을수록 응력이 높다 ·
+    칸 우하단 초록 점 = 사진/커브/메모 첨부됨</div>
 </div>
 
 <div id="tasks"></div>
 
 <footer>
-  과제 카드를 클릭하면 고정 조건 · <strong>스윕 범위(베이스라인 대비 상대값)</strong> ·
+  과제 카드를 클릭하면 고정 조건 · <strong>스윕 범위</strong> · 변경할 것 · 예상 영향 ·
   올릴 파일 이름 · 완료 판정 기준이 나옵니다.<br>
-  역할·일정은 <code>docs/ROLES.md</code>, 결과 올리는 법은 <code>README.md</code>.
+  체크박스는 <code>analysis/progress.json</code> 을 직접 편집(false→true)하고 commit+push 해야 갱신됩니다 — 정적 사이트라 클릭만으로는 저장되지 않습니다.<br>
+  역할·일정은 <code>docs/ROLES.md</code>, 결과 올리는 법은 <code>README.md</code>, 검증 기록은 <code>docs/technical-notes.md</code>.
 </footer>
 </div>
 
@@ -130,9 +143,16 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 <script src="tasks.js"></script>
 <script>
-let DATA=null;
-const OC={A:'--A',B:'--B',C:'--C'};
+let DATA=null, PROGRESS=null;
+const OC={A:'--A',C:'--C'};
+const OWNER_NAMES=["유용성","남다연"];
 const NAME2OI={};TASKS.forEach(t=>{if(t.oi!=='all')NAME2OI[t.owner]=t.oi;});
+
+async function fetchJson(path){
+  const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok) throw new Error(r.status);
+  return r.json();
+}
 
 async function boot(){
   const m=document.getElementById('mode'), msg=document.getElementById('srcmsg');
@@ -140,13 +160,21 @@ async function boot(){
     m.textContent='로컬 파일';
     msg.innerHTML='브라우저 보안 정책상 <code>file://</code> 에서는 자동 로딩이 안 됩니다. '+
       '위 버튼으로 <code>analysis/status.json</code> 을 직접 여세요.';
+    renderTasks(); // progress 없이도 과제 카드는 렌더링
     return;
   }
   m.textContent = location.hostname.endsWith('github.io') ? 'GitHub Pages' : '로컬 서버';
   try{
-    const r=await fetch('analysis/status.json?t='+Date.now(),{cache:'no-store'});
-    if(!r.ok) throw new Error(r.status);
-    render(await r.json()); msg.innerHTML='';
+    PROGRESS = await fetchJson('analysis/progress.json');
+  }catch(e){ PROGRESS = {}; }
+  renderTasks();
+  try{
+    const d = await fetchJson('analysis/status.json');
+    render(d); msg.innerHTML='';
+    if(d.values_confirmed===false){
+      document.getElementById('confirmmsg').innerHTML =
+        '<div class="warn">⚠ baseline/params.yaml 의 Ge%/리세스 깊이 스윕 값이 아직 확정 안 됐습니다 (doe.values_confirmed=false). 지금 보이는 격자/등고선은 참고용입니다.</div>';
+    }
   }catch(e){
     msg.innerHTML='아직 올라온 결과가 없습니다. 누군가 <code>runs/</code> 에 CSV 를 push 하면 '+
       '자동으로 채워집니다.';
@@ -174,53 +202,78 @@ function render(d){
 }
 
 function drawGrid(d){
-  const vals=d.points.filter(p=>p.done&&p.I_GIDL_A_um>0).map(p=>Math.log10(p.I_GIDL_A_um));
-  const lo=Math.min(...vals), hi=Math.max(...vals);
+  const vals=d.points.filter(p=>p.done&&p.stress_GPa!=null).map(p=>p.stress_GPa);
+  const lo=vals.length?Math.min(...vals):0, hi=vals.length?Math.max(...vals):1;
   let h='<table class="grid"><tr><th></th>';
-  d.x_levels.forEach(x=>h+=`<th>D${x}</th>`); h+='</tr>';
+  d.x_levels.forEach(x=>h+=`<th>G${x}%</th>`); h+='</tr>';
   [...d.y_levels].reverse().forEach(y=>{
-    h+=`<tr><th>×${y.toFixed(2)}</th>`;
+    h+=`<tr><th>${y}nm</th>`;
     d.x_levels.forEach(x=>{
-      const p=d.points.find(q=>q.D===x&&q.N===y);
+      const p=d.points.find(q=>q.G===x&&q.R===y);
       const oi=NAME2OI[p.owner]||'A', col=OC[oi];
       let bg='transparent', val='–';
-      if(p.done&&p.I_GIDL_A_um>0){
-        const t=vals.length>1?(Math.log10(p.I_GIDL_A_um)-lo)/(hi-lo):.5;
-        bg=`hsl(${260-160*t} 55% ${13+22*t}%)`; val=p.I_GIDL_A_um.toExponential(1);
+      if(p.done&&p.stress_GPa!=null){
+        const t=vals.length>1?(p.stress_GPa-lo)/(hi-lo):.5;
+        bg=`hsl(${260-160*t} 55% ${13+22*t}%)`; val=p.stress_GPa.toFixed(2)+'GPa';
       }
-      h+=`<td><div class="cell" title="${p.owner||''}" style="background:${bg};
+      const att=`<span class="att">
+        <span class="dot ${p.has_structure?'on':'off'}" title="구조 사진"></span>
+        <span class="dot ${p.has_curve?'on':'off'}" title="커브"></span>
+        <span class="dot ${p.has_notes?'on':'off'}" title="메모"></span>
+      </span>`;
+      h+=`<td><div class="cell" title="${p.owner||''}${p.notes_preview?(' — '+p.notes_preview):''}" style="background:${bg};
         border-color:var(${col});border-style:${p.done?'solid':'dashed'};opacity:${p.done?1:.45}">
-        <span class="rid">${p.run_id}</span><span class="v">${val}</span></div></td>`;
+        <span class="rid">${p.run_id}</span><span class="v">${val}</span>${att}</div></td>`;
     });
     h+='</tr>';
   });
   document.getElementById('gridwrap').innerHTML=h+'</table>';
 }
 
-(function(){
+function checkboxRow(t){
+  const names = t.mode==='joint' ? OWNER_NAMES : [t.owner];
+  const st = (PROGRESS && PROGRESS[String(t.n)]) || {};
+  return '<div class="chkrow">'+names.map(nm=>{
+    const checked = !!st[nm];
+    return `<label class="chk"><input type="checkbox" disabled ${checked?'checked':''}> ${nm}</label>`;
+  }).join('')+'</div>';
+}
+
+function renderTasks(){
   let h='';
   PHASES.forEach(ph=>{
     const ts=TASKS.filter(t=>t.phase===ph.id);
     h+=`<h2>${ph.id} · ${ph.name}<span class="ph">${ph.week} · ${ts.length}개</span></h2><div class="cards">`;
     ts.forEach(t=>{
-      h+=`<div class="card o${t.oi}" onclick="openM(${t.n})">
+      h+=`<div class="card o${t.oi}">
         <span class="num">#${t.n}</span>
         <span class="badge b${t.oi}">${t.owner}</span>
+        <span class="badge ${t.mode==='joint'?'ball':'b'+t.oi}" style="opacity:.8">${t.mode==='joint'?'공동':'개별'}</span>
         ${t.flag?`<span class="badge bflag">${t.flag}</span>`:''}
-        <div class="t">${t.title}</div><div class="p">${t.purpose}</div></div>`;
+        <div class="t" onclick="openM(${t.n})">${t.title}</div>
+        <div class="p" onclick="openM(${t.n})">${t.purpose}</div>
+        ${checkboxRow(t)}
+      </div>`;
     });
     h+='</div>';
   });
   document.getElementById('tasks').innerHTML=h;
-})();
+}
 
 function openM(n){
   const t=TASKS.find(x=>x.n===n);
   let h=`<button class="close" onclick="closeM()">×</button>
     <span class="num" style="color:var(--tx3)">#${t.n} · ${t.phase}</span>
     <span class="badge b${t.oi}">${t.owner}</span>
+    <span class="badge ${t.mode==='joint'?'ball':'b'+t.oi}">${t.mode==='joint'?'공동 과제 (체크 2개)':'개별 과제 (체크 1개)'}</span>
     ${t.flag?`<span class="badge bflag">${t.flag}</span>`:''}
     <h3>${t.title}</h3><h4>목적</h4><div>${t.purpose}</div>`;
+  if(t.change){
+    h+=`<h4>이 과제에서 변경/확정해야 할 것</h4><div class="change">${t.change}</div>`;
+  }
+  if(t.impact){
+    h+=`<h4>그걸 정하면 무엇이 달라지나</h4><div class="impact">${t.impact}</div>`;
+  }
   if(t.fixed){
     h+='<h4>고정 조건 — 건드리지 않는다</h4><table>';
     t.fixed.forEach(([k,v])=>h+=`<tr><td>${k}</td><td>${v}</td></tr>`); h+='</table>';
@@ -240,6 +293,7 @@ function openM(n){
   h+='<h4>할 일</h4><ul>'+t.todo.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   h+='<h4>완료 판정 기준</h4><ul>'+t.done.map(x=>`<li>${x}</li>`).join('')+'</ul>';
   if(t.out) h+='<h4>산출물</h4><ul>'+t.out.map(x=>`<li>${x}</li>`).join('')+'</ul>';
+  h+='<h4>진행 체크</h4>'+checkboxRow(t);
   if(t.warn) h+=`<div class="warn">⚠ ${t.warn}</div>`;
   document.getElementById('modal').innerHTML=h;
   document.getElementById('ov').classList.add('on');
