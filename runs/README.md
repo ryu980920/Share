@@ -17,8 +17,8 @@
 
 ```
 runs/
-  유용성_Ge낮은열.csv
-  주수빈_Ge중간열.csv
+  주수빈_Ge낮은열.csv
+  유용성_Ge중간열.csv
   남다연_Ge높은열.csv
   유용성_교차검증.csv
 ```
@@ -51,7 +51,7 @@ SWB 의 파라미터 이름이 그대로 격자 좌표가 된다. `GePercent = 3
 
 ```bash
 python analysis/build.py          # 확인
-git add runs/유용성_Ge낮은열.csv
+git add runs/주수빈_Ge낮은열.csv
 git commit -m "G20 열 완료"
 git push
 ```

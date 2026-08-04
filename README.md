@@ -31,7 +31,7 @@
 
 ```bash
 # 1. 수치 데이터 — 자기 이름의 누적 CSV 에 한 줄 추가
-echo "G30_R50,1.62,18.4" >> runs/유용성_Ge낮은열.csv     # 컬럼: run_id,stress_GPa,mobility_gain_pct
+echo "G30_R50,1.62,18.4" >> runs/주수빈_Ge낮은열.csv     # 컬럼: run_id,stress_GPa,mobility_gain_pct
 
 # 2. 사진·메모 — run_id 폴더에 (파일명 자유, 여러 장 가능)
 mkdir -p runs/attachments/G30_R50
@@ -40,7 +40,7 @@ echo "리세스 rate 0.02 로 변경, Ge% 는 baseline 그대로" > runs/attachm
 
 # 3. 지표 정리 (★ 손으로 계산하지 않는다) + 올리기
 python analysis/build.py
-git add runs/유용성_Ge낮은열.csv runs/attachments/G30_R50 && git commit -m "G30_R50 완료" && git push
+git add runs/주수빈_Ge낮은열.csv runs/attachments/G30_R50 && git commit -m "G30_R50 완료" && git push
 ```
 
 push 하면 **GitHub Actions 가 알아서** 전체를 다시 병합하고 대시보드를 갱신한다.
