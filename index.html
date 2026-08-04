@@ -229,8 +229,13 @@ const GH_OWNER='ryu980920', GH_REPO='Share', GH_BRANCH='main';
 function ghToken(){ return localStorage.getItem('gh_pat')||''; }
 // GitHub REST API 는 classic/fine-grained 토큰 모두 Bearer 스킴을 표준으로 문서화한다.
 // (구버전 'token ' 스킴은 fine-grained 토큰에서 401 Bad credentials 가 나는 경우가 있었다.)
-function ghHeaders(extra){ return Object.assign({Authorization:'Bearer '+ghToken(),
-  Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}, extra||{}); }
+// 토큰이 없을 땐 Authorization 헤더 자체를 아예 안 보낸다 — 이 API 는 public 저장소면 비로그인 GET 도 되는데,
+// 빈 문자열이라도 'Bearer ' 를 보내면 GitHub 가 이걸 "잘못된 자격증명"으로 보고 401 을 낸다.
+function ghHeaders(extra){
+  const h=Object.assign({Accept:'application/vnd.github+json','X-GitHub-Api-Version':'2022-11-28'}, extra||{});
+  const t=ghToken(); if(t) h.Authorization='Bearer '+t;
+  return h;
+}
 function utf8ToB64(str){ return btoa(unescape(encodeURIComponent(str))); }
 function b64ToUtf8(b64){ return decodeURIComponent(escape(atob(b64.replace(/\n/g,'')))); }
 function fileToB64(file){
@@ -448,9 +453,16 @@ async function boot(){
     return;
   }
   m.textContent = location.hostname.endsWith('github.io') ? 'GitHub Pages' : '로컬 서버';
+  // ★ progress.json 은 GitHub API(api.github.com)로 직접 읽는다 — GitHub Pages 로 배포된 정적 파일은
+  //   push 직후 몇 분간 구버전을 서빙할 수 있어서, 그걸 읽으면 방금 커밋된 체크 표시가 새로고침 후
+  //   사라진 것처럼 보인다 (다른 칸을 눌러서 toggleProgress 가 API로 새로 받아와야만 다시 보임).
+  //   API 는 캐시 지연이 없으므로 이걸 우선으로 쓰고, 실패할 때만(레이트리밋 등) 정적 파일로 대체한다.
   try{
-    PROGRESS = await fetchJson('analysis/progress.json');
-  }catch(e){ PROGRESS = {}; }
+    const f = await ghGetFile('analysis/progress.json');
+    PROGRESS = f ? JSON.parse(b64ToUtf8(f.content)) : {};
+  }catch(e){
+    try{ PROGRESS = await fetchJson('analysis/progress.json'); }catch(e2){ PROGRESS = {}; }
+  }
   renderTasks();
   try{
     const d = await fetchJson('analysis/status.json');
