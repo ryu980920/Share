@@ -1,17 +1,21 @@
 * =====================================================================
-*  FinFET + Embedded SiGe S/D — 응력/이동도 추출 — Sentaurus Device
+*  FinFET pMOS + Embedded SiGe S/D — Stress Transfer Efficiency 추출 — Sentaurus Device
 *
-*  ★★★ 이 파일도 처음부터 지어낸 게 아니라 TODO 골격이다. ★★★
-*  (2026-08-04: 원래 파일명이 bcat_sdevice.cmd 였으나 예전 BCAT 프로젝트와 무관한
-*  내용인데도 이름만 남아있어 혼동을 줘서 finfet_sdevice.cmd 로 개명함.)
+*  ★★★ 이 파일도 처음부터 지어낸 게 아니라 TODO 골격이다. 아직 실제
+*  Sentaurus 에서 검증되지 않았다 — 반드시 실제 Sentaurus 에서 테스트할 것. ★★★
+*
+*  파일명 이력: bcat_sdevice.cmd(예전 BCAT 프로젝트 잔재, 내용 무관)
+*  → finfet_sdevice.cmd (2026-08-04 개명, 이름은 유지). 구조 스크립트는
+*  finfet_sde.scm → finfet_sprocess.scm 으로 개명됨(2026-08-05, STE 전환).
 *
 *  ============================ 시작 방법 ============================
-*  1. FinFET_14nm/22nm 예제의 SDevice 커맨드 파일을 그대로 이 파일 위치에
-*     복사해 온다. 지금 내용은 자리표시자이니 덮어써도 된다.
+*  1. Sentaurus FinFET_14nm 예제(Munkang Choi, Synopsys, 2013)의 SDevice
+*     커맨드 파일을 그대로 이 파일 위치에 복사해 온다. 지금 내용은
+*     자리표시자이니 덮어써도 된다.
 *  2. 아래 TODO 항목 순서대로 수정한다.
-*  ★ 격자점마다 바뀌는 것은 구조 파일(@tdr@)뿐이어야 한다. 이 파일의
-*    물리 모델·바이어스는 모든 격자점에서 동일해야 한다 — 안 그러면
-*    등고선이 거짓말이 된다 (기존 BCAT 프로젝트의 규칙 그대로 승계).
+*  ★ 격자점마다 바뀌는 것은 구조 파일(@tdr@, Ge%/FR 반영)뿐이어야 한다.
+*    이 파일의 물리 모델·추출 설정은 모든 격자점에서 동일해야 한다 —
+*    안 그러면 STE 지도가 거짓말이 된다 (기존 BCAT 프로젝트의 규칙 그대로 승계).
 * =====================================================================
 
 File {
@@ -23,38 +27,40 @@ File {
 }
 
 * ---------------------------------------------------------------------
-*  TODO-ELECTRODE : 원본 예제의 Electrode 이름/Workfunction 을 그대로 가져올 것.
-*  finfet_sde.scm 의 컨택 이름과 반드시 일치해야 한다.
+*  TODO-ELECTRODE : 원본 예제의 Electrode 이름을 그대로 가져올 것.
+*  finfet_sprocess.scm 의 컨택 이름과 반드시 일치해야 한다.
+*  ★ 이 서브구조엔 게이트 재질이 없다(params.yaml geometry.gate_material_present:
+*    false) — 원본 예제에 게이트 관련 전극이 없다면 이 블록 자체가 필요
+*    없을 수 있다. 원본을 열어 확인할 것.
 * ---------------------------------------------------------------------
 Electrode {
-*  { Name="gate"      Voltage=0.0  Workfunction=??? }   * TODO: params.yaml materials.gate_workfunction_eV 확정 후 반영
 *  { Name="source"    Voltage=0.0 }
 *  { Name="drain"     Voltage=0.0 }
 *  { Name="substrate" Voltage=0.0 }
 }
 
 * =====================================================================
-*  TODO-STRESS-PHYSICS : 응력/변형(strain) 계산을 켜는 지점
+*  TODO-STRESS-EXTRACT : 응력 텐서 출력을 확인/보강하는 지점
 *
-*  Sentaurus Device 의 Stress 관련 물리는 보통 아래 형태 중 하나로 켠다
-*  (정확한 키워드는 설치 버전 SDevice User Guide 의 "Mechanical Stress"
-*  또는 "Strain" 장에서 확인할 것 — 지어내지 말 것):
-*    Physics { Stress ( ... ) }               또는
-*    Math { -Stress ... }                     또는
-*    별도의 MechanicalSolve 섹션
-*
-*  ★ 확인해야 할 것 (docs/technical-notes.md 4절 항목 3 과 동일):
-*    이 Stress 섹션에 전위결함(소성 완화) 예측 모델이 기본 포함돼 있는지.
-*    포함 안 돼 있다고 확인되면(현재 가정), People-Bean/Luryi-Suhir 경계선을
-*    analysis/contour.py 에서 별도로 오버레이하는 하이브리드 방법론이
-*    유일한 선택지가 된다 — 이 파일에서 결함을 억지로 흉내내려 하지 말 것.
+*  README.md/params.yaml 확인 결과, 이 예제는 StressELXX/YY/ZZ 필드를
+*  ★이미 doping 명령으로 출력하고 있다 — 추출 자체는 새로 만들 필요 없이
+*  TODO-BASE(finfet_sprocess.scm)에서 예제 원본을 그대로 복사해 오면
+*  이 파일에도 대응하는 Physics/Plot 설정이 이미 있을 가능성이 높다.
+*  이 파일을 원본으로 덮어쓴 뒤, 아래 항목만 확인할 것:
+*    1. StressELXX/YY/ZZ 가 Plot 블록에 실제로 포함돼 있는지
+*    2. 이 값이 GPa 단위인지 다른 단위(Pa, dyn/cm^2 등)인지 — analysis/config.yaml
+*       의 STE 계산이 이 단위를 전제로 한다
+*  ★ 이 프로젝트는 결함(전위) 모델 유무를 더 이상 확인하지 않는다 —
+*    People-Bean/Luryi-Suhir 결함 경계 프레이밍을 폐기했기 때문이다
+*    (README.md 참고). 이 Physics 블록은 순수하게 응력 필드 추출용이다.
 * =====================================================================
 Physics {
-*  TODO: Stress/Strain 관련 키워드 (원본 예제 또는 User Guide 확인 후 채울 것)
+*  TODO: 원본 예제의 Stress/Strain 관련 키워드 그대로 사용 (지어내지 않는다)
 
    Mobility (
-      * TODO: 응력 의존 이동도 모델. 보통 "Stress" 또는 "PiezoResistance"
-      * 관련 서브키워드가 필요하다 (미확인 — User Guide 확인 필수).
+      * TODO: 원본 예제에 이동도 모델이 있다면 그대로 유지. STE 지표는
+      * 이동도가 아니라 응력 비율이므로 이 블록이 필수는 아닐 수 있다 —
+      * 원본 예제 구성에 따라 결정.
       DopingDependence
       HighFieldSaturation
       Enormal
@@ -63,8 +69,8 @@ Physics {
 
 Plot {
    eDensity  hDensity
-*  TODO-STRESS-PLOT : 응력 텐서 성분을 Plot 에 반드시 추가할 것
-*  (보통 Stress/Vector 또는 개별 성분 xx/yy/zz 형태 — User Guide 확인)
+*  TODO-STRESS-PLOT : StressELXX/YY/ZZ 가 이미 있는지 확인, 없으면 원본
+*  예제의 정확한 키워드로 추가할 것 (지어내지 않는다)
    eMobility hMobility
 }
 
@@ -81,14 +87,12 @@ Math {
 }
 
 * =====================================================================
-*  TODO-SOLVE : 응력/이동도 추출 시퀀스
+*  TODO-SOLVE : 응력 추출 시퀀스
 *
-*  순수 구조 응력만 필요하면 전기적 바이어스 없이 Mechanical 솔브만으로
-*  충분할 수도 있고(원본 예제가 Mechanical 전용 노드를 따로 두는지 확인),
-*  이동도 향상률까지 Id-Vg 로 보려면 기존 BCAT 프로젝트의 Quasistationary
-*  스윕 패턴을 참고해 게이트/드레인을 스윕한다.
-*  ★ 어느 쪽이 필요한지, 그리고 정확한 Solve 문법은 원본 예제를 보고
-*    결정할 것 — 지어내지 말 것.
+*  이 서브구조엔 게이트 재질이 없고(순수 응력 계산용), 원본 예제가
+*  Mechanical 전용 노드를 따로 두는지 확인할 것. 전기적 바이어스 없이
+*  구조 응력만 뽑는 것으로 충분할 가능성이 높다 — 정확한 Solve 문법은
+*  원본 예제를 보고 결정할 것. 지어내지 말 것.
 * =====================================================================
 Solve {
 *  TODO: 원본 예제의 Solve 시퀀스를 그대로 가져와 채울 것

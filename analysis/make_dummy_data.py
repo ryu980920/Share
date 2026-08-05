@@ -8,6 +8,11 @@ make_dummy_data.py — 가짜 데이터로 파이프라인을 시험한다.
 
 ★ x_levels/y_levels 는 baseline/params.yaml 의 값(지금은 placeholder)을 그대로
   읽어서 쓴다. 실제 스윕 값이 확정되면 자동으로 그 값 기준으로 더미가 생성된다.
+
+★ 2026-08-05: Y축 변수명이 리세스 깊이(Recess_nm) → FR(FR_nm)로 바뀌었고,
+  지표가 mobility_gain_pct → ste(Stress Transfer Efficiency)로 바뀌었다.
+  ste 정규화 방법은 아직 팀 확정 전이므로, 여기서 만드는 ste 는 순전히
+  파이프라인 시험용 가짜 비율(0~1 근방)일 뿐 실제 계산식이 아니다.
 """
 
 import argparse
@@ -25,15 +30,15 @@ PARAMS = ROOT / "baseline" / "params.yaml"
 OWNERS = ["유용성", "주수빈", "남다연"]
 
 
-def synth_point(ge_pct, recess_nm, rng):
+def synth_point(ge_pct, fr_nm, rng):
     """단순 합성 모델. 교호작용(+0.35) 을 일부러 심어서 contour.py 가 시너지로 판정하게 한다."""
-    x = (ge_pct - 30.0) / 10.0
-    y = (recess_nm - 50.0) / 20.0
+    x = (ge_pct - 50.0) / 20.0    # 공칭 Ge% 50% 기준
+    y = (fr_nm - 20.0) / 20.0     # 공칭 FR 근방 기준 (예시)
     stress = 1.4 + 0.55 * x + 0.35 * y + 0.35 * x * y            # GPa, 교호작용 삽입
-    mobility_gain = 15.0 + 6.0 * x + 4.0 * y + 3.0 * x * y        # %
+    ste = 0.5 + 0.10 * x + 0.07 * y + 0.05 * x * y                # ★가짜 비율 — 실제 STE 계산식 아님
     noise_s = rng.normal(0, 0.03)
-    noise_m = rng.normal(0, 0.4)
-    return max(stress + noise_s, 0.01), mobility_gain + noise_m
+    noise_e = rng.normal(0, 0.02)
+    return max(stress + noise_s, 0.01), min(max(ste + noise_e, 0.0), 1.0)
 
 
 def main():
@@ -75,12 +80,12 @@ def main():
         path = RUNS / f"{owner}_dummy.csv"
         with open(path, "w", encoding="utf-8") as f:
             f.write("# DUMMY — 파이프라인 시험용. 실제 결과 아님\n")
-            f.write("run_id,stress_GPa,mobility_gain_pct\n")
+            f.write("run_id,stress_GPa,ste\n")
             for g in cols:
                 for r in yl:
-                    rid = f"G{int(round(g))}_R{int(round(r))}"
-                    stress, mob = synth_point(float(g), float(r), rng)
-                    f.write(f"{rid},{stress:.4f},{mob:.4f}\n")
+                    rid = f"G{int(round(g))}_F{int(round(r))}"
+                    stress, ste = synth_point(float(g), float(r), rng)
+                    f.write(f"{rid},{stress:.4f},{ste:.4f}\n")
         made += 1
         print(f"  생성: runs/{path.name}")
 

@@ -4,15 +4,22 @@ build.py — runs/ 의 스윕 CSV 들을 읽어 지표를 정리하고 격자표
 
 ★ 이 스크립트 하나가 전부다.
 
+★ 2026-08-05: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
+  Stress Transfer Efficiency(STE) 프레이밍으로 전환. Y축 변수명이
+  리세스 깊이(Recess_nm) → FR(FR_nm)로 바뀌었다. STE(ste) 정규화 방법이
+  아직 팀 확정 전이라 이 스크립트는 stress_GPa 만 필수로 다루고, ste 는
+  CSV 에 있으면 그대로 통과시키기만 한다 (계산은 하지 않는다). 자세한
+  경위는 README.md 참고.
+
 입력  runs/<이름>_<스윕이름>.csv      wide 형식: 한 줄 = 한 격자점
-      run_id, stress_GPa, mobility_gain_pct [, Vth_V, Ion_A_um ...]
+      run_id, stress_GPa [, ste, Vth_V, Ion_A_um ...]
       runs/attachments/<run_id>/{사진 파일들(파일명 자유), notes.md}   (선택)
 출력  analysis/grid.csv               격자점 하나당 한 줄
       analysis/status.json            대시보드용 (체크리스트 진행률은 progress.json 이 별도)
 
 사용법
     python analysis/build.py
-    python analysis/build.py --metric mobility_gain_pct
+    python analysis/build.py --metric stress_GPa
 """
 
 import argparse
@@ -31,23 +38,23 @@ PARAMS = ROOT / "baseline" / "params.yaml"
 OUT_CSV = ROOT / "analysis" / "grid.csv"
 OUT_JSON = ROOT / "analysis" / "status.json"
 
-REQUIRED = ["run_id", "stress_GPa", "mobility_gain_pct"]
+REQUIRED = ["run_id", "stress_GPa"]   # ste 는 아직 정규화 미확정이라 필수 아님 — 있으면 통과시킴
 XCHECK_TOL = 0.05          # 교차검증 허용 편차 (주 지표 stress_GPa 기준)
 XCHECK_METRIC = "stress_GPa"
 
 
 # ----------------------------------------------------------------------
 def parse_run_id(rid):
-    """'G30_R50' -> (30.0, 50.0)   (Ge%, 리세스 깊이 nm)"""
+    """'G50_F10' -> (50.0, 10.0)   (Ge%, FR_nm)"""
     try:
         p = str(rid).split("_")
-        return float(p[0].lstrip("Gg")), float(p[1].lstrip("Rr"))
+        return float(p[0].lstrip("Gg")), float(p[1].lstrip("Ff"))
     except Exception:
         return float("nan"), float("nan")
 
 
-def make_run_id(ge, recess):
-    return f"G{int(round(ge))}_R{int(round(recess))}"
+def make_run_id(ge, fr):
+    return f"G{int(round(ge))}_F{int(round(fr))}"
 
 
 # ----------------------------------------------------------------------
@@ -94,7 +101,7 @@ def read_swb(path, cfg):
     names, data = rows[2], rows[3:]
 
     sw = cfg.get("swb", {})
-    xp, yp = sw.get("x_param", "GePercent"), sw.get("y_param", "Recess_nm")
+    xp, yp = sw.get("x_param", "GeMoleFraction"), sw.get("y_param", "FR_nm")
     mapping = sw.get("map", {})
 
     def col(nm):
@@ -120,10 +127,10 @@ def read_swb(path, cfg):
 
     out, pending = [], 0
     for r in data:
-        g, rc = num(r[ix]), num(r[iy])
-        if not (np.isfinite(g) and np.isfinite(rc)):
+        g, fr = num(r[ix]), num(r[iy])
+        if not (np.isfinite(g) and np.isfinite(fr)):
             continue
-        rec = {"Ge_percent": g, "Recess_nm": rc, "run_id": make_run_id(g, rc)}
+        rec = {"Ge_percent": g, "FR_nm": fr, "run_id": make_run_id(g, fr)}
         empty = True
         for our, swb_name in mapping.items():
             i = col(swb_name)
@@ -154,7 +161,7 @@ def main():
     if not doe.get("values_confirmed", False):
         print("=" * 66)
         print(" ⚠ 경고: baseline/params.yaml 의 doe.values_confirmed 가 false 다.")
-        print("   Ge%/리세스 깊이 스윕 값이 아직 확정되지 않았다는 뜻이다.")
+        print("   Ge%/FR(리세스 깊이) 스윕 값이 아직 확정되지 않았다는 뜻이다.")
         print("   지금 나오는 격자표/등고선은 참고용이며, 확정 전에 결론 내지 말 것.")
         print("=" * 66)
         print()
@@ -197,18 +204,18 @@ def main():
         miss = [c for c in REQUIRED if c not in df.columns]
         if miss:
             print(f"  [실패] {f.name}: 컬럼 {miss} 누락. 발견={list(df.columns)}")
-            print(f"          → 컬럼명은 정확히 run_id,stress_GPa,mobility_gain_pct (대소문자 구분)")
+            print(f"          → 컬럼명은 정확히 run_id,stress_GPa (대소문자 구분). ste 는 있으면 통과시킴")
             problems.append(f.name); continue
 
         ids = []
         for _, r in df.iterrows():
             rid = r["run_id"]
-            ge, rc = parse_run_id(rid)
+            ge, fr = parse_run_id(rid)
             warn = ""
             if pd.notna(r.get("stress_GPa")) and abs(float(r["stress_GPa"])) > 10:
                 warn = "응력이 10 GPa 초과 — 단위/부호 확인 의심"
             rec = {"run_id": rid, "owner": owner, "source": f.name,
-                   "Ge_percent": ge, "Recess_nm": rc, "warn": warn}
+                   "Ge_percent": ge, "FR_nm": fr, "warn": warn}
             for extra in df.columns:
                 if extra == "run_id":
                     continue
@@ -250,8 +257,8 @@ def main():
         bad = [x for x in xcheck if not x["ok"]]
         if bad:
             print(f"\n  ★ {len(bad)}개가 허용치({XCHECK_TOL*100:.0f}%)를 넘었다.")
-            print("    환경 차이(버전/추출 위치 정의/모델 파라미터)를 의심할 것.")
-            print("    원인 규명 전에는 등고선을 그리지 말 것.")
+            print("    환경 차이(버전/STE 정규화 방식/모델 파라미터)를 의심할 것.")
+            print("    원인 규명 전에는 STE 지도를 그리지 말 것.")
 
     mu = m.drop_duplicates("run_id", keep="first")
 
@@ -260,7 +267,7 @@ def main():
     print("=" * 66)
     print(" 3. DoE 격자 진행률")
     print("=" * 66)
-    have = {(round(r.Ge_percent, 1), round(r.Recess_nm, 1)) for r in mu.itertuples()}
+    have = {(round(r.Ge_percent, 1), round(r.FR_nm, 1)) for r in mu.itertuples()}
     planned = [(round(x, 1), round(y, 1)) for x in xl for y in yl]
     missing = [p for p in planned if p not in have]
     done = len(planned) - len(missing)
@@ -276,7 +283,7 @@ def main():
     print(f" 4. 격자표 — {args.metric}")
     print("=" * 66)
     if args.metric in mu.columns:
-        pv = mu.pivot_table(index="Recess_nm", columns="Ge_percent",
+        pv = mu.pivot_table(index="FR_nm", columns="Ge_percent",
                             values=args.metric).sort_index(ascending=False)
         with pd.option_context("display.float_format", lambda v: f"{v:.3e}"):
             print(pv.to_string())
@@ -284,7 +291,7 @@ def main():
         print(f"  ({args.metric} 컬럼이 아직 없다)")
 
     # --- 5. 저장 ---------------------------------------------------------
-    mu.sort_values(["Ge_percent", "Recess_nm"]).to_csv(OUT_CSV, index=False)
+    mu.sort_values(["Ge_percent", "FR_nm"]).to_csv(OUT_CSV, index=False)
 
     owner_of = {}
     for r in mu.itertuples():
@@ -298,7 +305,7 @@ def main():
                    "owner": owner_of.get(round(x, 1), "")}
             if not hit.empty:
                 r = hit.iloc[0]
-                for k in ["stress_GPa", "mobility_gain_pct", "Vth_V", "Ion_A_um",
+                for k in ["stress_GPa", "ste", "Vth_V", "Ion_A_um",
                           "has_photo", "n_photos", "has_notes", "notes_preview"]:
                     v = r.get(k)
                     if isinstance(v, (bool, str)):

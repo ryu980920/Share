@@ -117,8 +117,8 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 <div class="wrap">
 
 <header>
-  <h1>FinFET + Embedded SiGe S/D — 응력공학</h1>
-  <div class="sub">차세대반도체 경진대회 · 유용성 · 주수빈 · 남다연 · Ge% x 리세스 깊이 DoE
+  <h1>FinFET pMOS eSiGe S/D — Stress Transfer Efficiency</h1>
+  <div class="sub">차세대반도체 경진대회 · 유용성 · 주수빈 · 남다연 · Ge% x FR(리세스 깊이) DoE
     &nbsp;·&nbsp; <span id="gen">데이터 없음</span></div>
 </header>
 
@@ -143,7 +143,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
 
 <div class="gridbox">
   <div style="font-weight:600;margin-bottom:10px">DoE 격자
-    <span class="ph">가로 = Ge 조성 [%] · 세로 = 리세스 깊이 [nm] · 색 = stress_GPa</span></div>
+    <span class="ph">가로 = Ge 조성 [%] · 세로 = FR(리세스 깊이) [nm] · 색 = stress_GPa</span></div>
   <div id="gridwrap"><div style="color:var(--tx3);font-size:13px">
     결과가 올라오면 격자점의 상태와 응력 값이 여기 표시됩니다.</div></div>
   <div class="legend">테두리 색 = 담당자
@@ -202,7 +202,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     <div id="attachRecommend" class="note" style="margin-top:0;font-style:normal;line-height:1.55"></div>
 
     <div class="attachRow">
-      <label>소자 사진 — Ge%/리세스를 바꾸며 뭐가 달라졌는지 보여주는 사진 (여러 장 가능)</label>
+      <label>소자 사진 — Ge%/FR(리세스 깊이)을 바꾸며 뭐가 달라졌는지 보여주는 사진 (여러 장 가능)</label>
       <input type="file" accept="image/*" id="attachPhoto" onchange="uploadPhoto(this)">
       <div id="attachPhotoList" style="margin-top:6px;font-size:11px;color:var(--tx3)"></div>
     </div>
@@ -350,32 +350,26 @@ async function toggleProgress(taskNum,owner,el,statId){
   }
 }
 
-// People-Bean(1985) 임계두께 근사 — contour.py 의 people_bean_tc_nm() 과 동일한 공식.
-// ★주의: 평면(blanket) 기준 근사식이지, fin 구속 보정(Luryi-Suhir)까지 반영한 값은 아니다.
-function peopleBeanTcNm(gePercent){
-  const x=gePercent/100;
-  if(!(x>0)) return Infinity;
-  return 1.23*Math.pow(x,-3.08);
-}
+// ★ 2026-08-05: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
+// Stress Transfer Efficiency(STE) 프레이밍으로 전환하며 peopleBeanTcNm()
+// 기반 추천 로직을 제거했다 — README.md 참고. FR 이 클수록 탄성 완화가
+// 커져 STE 가 낮아질 수 있다는 가설만 있고 확정된 임계값은 없으므로,
+// 지금은 조건에 상관없이 동일한 추천만 보여준다.
 // 이 격자점에 뭐가 더 필요할지 — 이 한 줄이 "AI 추천". 업로드를 강제하지 않고 그냥 알려주기만 한다.
 function attachRecommendHtml(runId){
-  const m=runId.match(/^G([\d.]+)_R([\d.]+)$/i);
-  if(!m) return '📋 추천: 소자 사진(구조든 Id-Vg 커브든)을 하나 이상 남겨주세요.';
-  const ge=parseFloat(m[1]), recess=parseFloat(m[2]), tc=peopleBeanTcNm(ge);
-  const ratio=isFinite(tc)&&tc>0 ? recess/tc : null;
-  if(ratio!==null && ratio>=0.6){
-    return `📋 추천: 이 조건(Ge ${ge}%, 리세스 ${recess}nm)은 People-Bean 근사 임계두께(≈${tc.toFixed(1)}nm)의 `+
-      `${(ratio*100).toFixed(0)}%로 근접합니다 — <strong>결함(전위) 흔적이 보이는지 알 수 있는 단면 사진</strong>을 꼭 남겨주세요.`;
-  }
-  return `📋 추천: 이 조건은 임계두께 대비 여유 있어 결함 걱정은 적습니다. 구조 변화가 보이는 사진 정도면 충분합니다.`;
+  const m=runId.match(/^G([\d.]+)_F([\d.]+)$/i);
+  if(!m) return '📋 추천: 소자 사진(구조든 응력 분포든)을 하나 이상 남겨주세요.';
+  const ge=parseFloat(m[1]), fr=parseFloat(m[2]);
+  return `📋 추천: 이 조건(Ge ${ge}%, FR ${fr}nm)의 SiGe/Si 계면 단면 사진을 남겨주세요 — `+
+    `STE 정규화 방법이 확정되면(README.md "확정 필요 항목" 참고) 채널 인접 지점 사진이 특히 중요해집니다.`;
 }
 
 // 첨부물 업로드 모달 — 격자 칸 클릭으로 연다. 격자에 칸이 아직 없으면(=CSV 없음) 아래 수동 입력으로도 연다.
 function openAttachModalManual(){
   const v=document.getElementById('manualRunId').value.trim().toUpperCase();
-  if(!v){ alert('Run ID 를 입력할 것 (예: G30_R50)'); return; }
-  if(!/^G[\d.]+_R[\d.]+$/.test(v)){
-    if(!confirm(`"${v}" 가 G{Ge%}_R{리세스깊이} 형식이 아닌 것 같습니다. 그래도 계속할까요?`)) return;
+  if(!v){ alert('Run ID 를 입력할 것 (예: G50_F10)'); return; }
+  if(!/^G[\d.]+_F[\d.]+$/.test(v)){
+    if(!confirm(`"${v}" 가 G{Ge%}_F{FR} 형식이 아닌 것 같습니다 (제안 표기 — 팀 확정 필요). 그래도 계속할까요?`)) return;
   }
   openAttachModal(v);
 }
@@ -471,7 +465,7 @@ async function boot(){
     render(d); msg.innerHTML='';
     if(d.values_confirmed===false){
       document.getElementById('confirmmsg').innerHTML =
-        '<div class="warn">⚠ baseline/params.yaml 의 Ge%/리세스 깊이 스윕 값이 아직 확정 안 됐습니다 (doe.values_confirmed=false). 지금 보이는 격자/등고선은 참고용입니다.</div>';
+        '<div class="warn">⚠ baseline/params.yaml 의 Ge%/FR(리세스 깊이) 스윕 값이 아직 확정 안 됐습니다 (doe.values_confirmed=false). 지금 보이는 격자/등고선은 참고용입니다.</div>';
     }
   }catch(e){
     msg.innerHTML='아직 올라온 결과가 없습니다. 누군가 <code>runs/</code> 에 CSV 를 push 하면 '+
@@ -505,7 +499,7 @@ function drawGrid(d){
   let h='<table class="grid"><tr><th></th>';
   d.x_levels.forEach(x=>h+=`<th>G${x}%</th>`); h+='</tr>';
   [...d.y_levels].reverse().forEach(y=>{
-    h+=`<tr><th>${y}nm</th>`;
+    h+=`<tr><th>FR ${y}nm</th>`;
     d.x_levels.forEach(x=>{
       const p=d.points.find(q=>q.G===x&&q.R===y);
       const oi=NAME2OI[p.owner]||'A', col=OC[oi];
