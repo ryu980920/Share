@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-06 17:55",
+ "generated": "2026-08-06 19:26",
  "x_levels": [
   30.0,
   40.0,
@@ -12,11 +12,11 @@
   10.0,
   20.0,
   30.0,
-  40.0
+  35.0
  ],
  "done": 0,
  "total": 25,
- "values_confirmed": false,
+ "values_confirmed": true,
  "points": [
   {
    "run_id": "G30_F0",
@@ -63,9 +63,9 @@
    "notes_preview": ""
   },
   {
-   "run_id": "G30_F40",
+   "run_id": "G30_F35",
    "G": 30.0,
-   "R": 40.0,
+   "R": 35.0,
    "done": false,
    "owner": "",
    "has_photo": false,
@@ -118,9 +118,9 @@
    "notes_preview": ""
   },
   {
-   "run_id": "G40_F40",
+   "run_id": "G40_F35",
    "G": 40.0,
-   "R": 40.0,
+   "R": 35.0,
    "done": false,
    "owner": "",
    "has_photo": false,
@@ -173,9 +173,9 @@
    "notes_preview": ""
   },
   {
-   "run_id": "G50_F40",
+   "run_id": "G50_F35",
    "G": 50.0,
-   "R": 40.0,
+   "R": 35.0,
    "done": false,
    "owner": "",
    "has_photo": false,
@@ -228,9 +228,9 @@
    "notes_preview": ""
   },
   {
-   "run_id": "G60_F40",
+   "run_id": "G60_F35",
    "G": 60.0,
-   "R": 40.0,
+   "R": 35.0,
    "done": false,
    "owner": "",
    "has_photo": false,
@@ -283,9 +283,9 @@
    "notes_preview": ""
   },
   {
-   "run_id": "G70_F40",
+   "run_id": "G70_F35",
    "G": 70.0,
-   "R": 40.0,
+   "R": 35.0,
    "done": false,
    "owner": "",
    "has_photo": false,
