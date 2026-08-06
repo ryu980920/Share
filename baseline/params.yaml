@@ -19,8 +19,8 @@
 meta:
   baseline_source: "Synopsys Sentaurus 표준 예제 FinFET_14nm (Munkang Choi, Synopsys, 2013) — 학술 논문 아님"
   reference_paper_for_ste: "Choi et al. 2012 — 'Stress Transfer Efficiency' 용어 및 근접효과(nested/isolated) 데이터 출처. 팀은 이 용어의 선행 사용 여부를 더 검증하지 않기로 함 (README.md 참고, 리스크로 남김)"
-  last_verified: "2026-08-05"
-  verified_by: ""              # 예제 파일을 직접 열어 대조한 사람 이름 (미기재 — 채울 것)
+  last_verified: "2026-08-06"
+  verified_by: "유용성"        # 예제 파일을 직접 열어 대조. 실제 스크립트 4개(sprocess/sdevice/svisual x2)는 라이선스 확인 전까지 로컬에만 보관(.gitignore, README 참고)
 
 geometry:
   # ↓ Choi/Synopsys FinFET_14nm 예제에서 확인된 값. 확인자 이름은 verified_by 에 채울 것.
@@ -42,25 +42,44 @@ materials:
   gate_oxide: null              # 해당 없음 (위와 동일 이유)
 
 doping:
-  # ⚠ TODO — Ge% 외 도핑 관련 값은 아직 예제에서 확인하지 않음
+  # ★ 2026-08-06: 실제 finfet_sprocess.scm(baseline/) 에서 확인 — 아래는
+  #   전부 고정 baseline 상수다. Nch/Nstop 은 예제 자체가 @Nch@/@Nstop@
+  #   매크로로 파라미터화해뒀다 — 즉 팀이 CSV(runs/*.csv, baseline CSV)의
+  #   Nch/Nstop 컬럼으로 격자점마다 값을 넘기고 있으며, 단일 baseline
+  #   숫자로 고정돼있지 않다. 실제 사용값은 각 CSV 행을 참고할 것.
   sd_type: "p"                  # S/D(SiGe:B) — pMOS 응력공학
-  sd_boron_conc_cm3:            # TODO — 예제에서 확인 필요
+  sd_boron_conc_cm3: 2.0e20     # set Nsd 2.0e20 — 고정값(스윕 안 됨), Dsd="Boron"
+  channel_doping_species: "Phosphorus"   # set Dch "Phosphorus" — pMOS n-well 채널이라 n형. 농도는 @Nch@(CSV별 상이)
+  channel_stop_doping_species: "Arsenic" # set Dstop "Arsenic". 농도는 @Nstop@(CSV별 상이)
 
 output:
   stress_fields_already_extracted: true   # StressELXX/YY/ZZ 가 이미 doping 명령으로 출력되고 있음 — 추출 자체는 가능, 후처리만 하면 됨
+  stress_extraction_script: "baseline/finfet_svisual_stress.tcl"     # 로컬 전용(.gitignore, 2026-08-06) — SlFin/SwFin/ShFin 산출. 라이선스 확인 전 public 미커밋
+  electrical_extraction_script: "baseline/finfet_svisual_extract.tcl" # 로컬 전용(.gitignore, 2026-08-06) — VtiSat/IdSat_norm 등 산출. 라이선스 확인 전 public 미커밋
 
 # --- DoE 격자 정의 (analysis 스크립트가 읽는다) -------------------------
-# ⚠⚠⚠ 아래 x_levels/y_levels는 확정값이 아니라 파이프라인이 돌아가는지
-#     확인하기 위한 예시(placeholder)다. 특히 y(FR)는 스크립트에 아직 없는
-#     완전히 새로운 변수라, 추가 방법(docs/ROLES.md #4 유용성 과제)이
-#     확인되기 전까지는 스윕 자체가 불가능하다.
+# ★ 2026-08-06 확정. 근거:
+#   x(Ge%) 30~70%, 50% 중심 대칭 5점 — 이 fin 치수(반폭 7.5nm)에서는 결함
+#   경계가 Ge 42~100% 전 구간에서 안 걸려 상한을 결함 위험으로 제한할
+#   필요는 없음. 대신 물리모델이 실질적으로 검증된 범위(Choi 2012 데이터
+#   대역)와 실제 공정 현실성(Ge 70% 넘으면 에피 성장 품질·접합 누설 문제로
+#   실제 fab에서도 잘 안 씀)을 고려해 70%를 상한으로 잡음.
+#   y(FR) 0~35nm, 5점 — Gendron-Hansen 2015(SISPAD)가 FR≥10nm에서 응력이
+#   포화(plateau)된다고 명시해 0/10 두 점으로 포화 시작 지점을 잡고, 상단은
+#   원래 placeholder였던 40nm 대신 **fin 전체 높이(H=35nm)와 정확히 일치**하는
+#   35nm로 설정 — "리세스 깊이가 fin 전체 높이만큼일 때 응력 전달 효율이
+#   어떻게 되는가"라는, 이 프로젝트의 핵심 질문과 직결되는 물리적으로
+#   의미있는 경계값이기 때문 (40nm는 fin 높이를 근거 없이 초과하는 임의값이었음).
 doe:
   x_name: "Ge_percent"
-  x_levels: [30, 40, 50, 60, 70]        # ⚠ PLACEHOLDER — 확정 아님. 50이 공칭(중앙)
-  y_name: "FR_nm"                        # ★ 리세스 깊이(fin 바닥 아래 방향) — 신규 변수
-  y_levels: [0, 10, 20, 30, 40]          # ⚠ PLACEHOLDER — 확정 아님. Gendron-Hansen 2015(SISPAD)는 FR≥10nm에서 응력 최대라고 명시(결함 형성은 범위 밖)
-  baseline_point: "G50_F0"               # ⚠ PLACEHOLDER — FR=0이 예제 원본 상태와 같은지부터 확인 필요
-  values_confirmed: false                # ★ true 로 바뀌기 전까지 위 레벨은 예시일 뿐
+  x_levels: [30, 40, 50, 60, 70]        # ★ 확정 (2026-08-06). 50이 공칭(중앙)
+  y_name: "FR_nm"                        # ★ 리세스 깊이(fin 바닥 아래 방향)
+  y_levels: [0, 10, 20, 30, 35]          # ★ 확정 (2026-08-06). 35 = fin 전체 높이(H)와 일치
+  baseline_point: "G50_F0"               # ★ FR=0이 예제 원본과 같은 구조인지: finfet_sprocess.scm의 리세스 식각
+                                          #   로직이 FR=0 조건에서는 아예 실행되지 않는 코드 구조로 확인됨 +
+                                          #   Strain_Impact=0/1 SWB 비교로 응력-이동도 결합도 확인됨(2026-08-06,
+                                          #   verification.strain_impact_coupling 참고)
+  values_confirmed: true                 # ★ 확정 (2026-08-06). 25격자점(5x5) 본 스윕 시작 가능
 
 # --- Stress Transfer Efficiency 계산 (docs/technical-notes.md 참고 예정) -
 stress_transfer_efficiency:
@@ -68,9 +87,20 @@ stress_transfer_efficiency:
     formula: "f(x) = 0.042 * x"    # x = Ge 몰분율(0~1) → 명목 격자 부정합
     note: "일반 SiGe 합금 격자상수 근사식. 정확한 출처(논문) 인용이 필요하면 추가 확인할 것 — 미확인"
   normalization:
-    channel_adjacent_point: null    # ⚠ TODO — "채널 인접" 지점의 정확한 좌표 정의. 팀 확정 필요 (docs/ROLES.md 4절 남다연 과제 결과 참고)
-    stress_to_GPa_method: null      # ⚠ TODO — StressEL 출력을 GPa로 환산하는 방법. 팀 확정 필요
-    note: "이 두 항목이 null 인 동안 ste 값은 참고용이지 결론이 아니다 (README.md 참고)"
+    # ★ 2026-08-06 (오전): baseline/finfet_svisual_stress.tcl 방식(ChFin
+    #   영역 전체 체적평균)을 STE 공식 정의로 일단 채택했었음.
+    # ★ 2026-08-06 (오후) 정정: G50_F0(Strain_Impact=1)에서 실제로 체적평균
+    #   vs 계면 인접 단일점 근사를 뽑아 비교해보니 차이가 예상보다 컸음
+    #   (아래 measured_diff_G50F0 참고, SlFin -2262 vs SlFin_pt -3482 =
+    #   53.9% 차이, ShFin 은 부호까지 반전(+490 vs -124)). 그래서 지금
+    #   단정적으로 "채택 확정"하지 않고, 아래 provisional 방식으로 전환.
+    adopted: "provisional"        # ★ 잠정 — 최종 채택은 25격자점 스윕 데이터 확보 후 결정 (2026-08-06 오후 변경)
+    decision: "당장 결론 내지 않고, 남은 24격자점 스윕에서 SlFin(체적평균)과 SlFin_pt(계면 인접 근사)를 둘 다 뽑아 모아둔 뒤, 전체 데이터로 어느 지표를 STE 정의로 쓸지 마지막에 결정하기로 함. finfet_svisual_stress.tcl 에 이미 둘 다 추출하는 코드가 들어있음 — 스윕 담당자 전원이 반드시 이 버전(2026-08-06, SlFin_pt/SwFin_pt/ShFin_pt/SlFin_diff_pct 포함)을 써야 함 (아래 note의 배포 문제 참고)."
+    channel_adjacent_point: "단일 좌표점 아님 — ChFin 영역 전체의 체적평균. integrate_field -regions {ChFin} -window {x:[0,H] y:[-0.5*Wbottom,0.5*Wbottom] z:[-0.5*L,0.5*L]} (baseline/finfet_svisual_stress.tcl)"
+    stress_to_GPa_method: "StressEL-ZZ(채널길이 방향)를 integrate_field로 ChFin 영역에 대해 적분한 값을, 같은 영역의 integrate_field -returndomain(체적)으로 나눠 체적평균을 구한 뒤 /1.0e6 → MPa (SlFin 컬럼). GPa로 쓰려면 /1000 추가. StressEL-XX/YY 는 각각 ShFin(fin높이 방향)/SwFin(fin폭 방향). 계면 인접 근사(SlFin_pt 등)는 x=0(fin 상단)/y=0/z=0 근방 2nm×2nm×1nm 슬래브로 같은 방식 적용."
+    measured_diff_G50F0: "G50_F0(Strain_Impact=1) 실측: SlFin=-2262MPa(체적평균) vs SlFin_pt=-3482MPa(계면근사) → 53.9% 차이(diff_pct 기준, 계면 쪽이 더 압축적). ShFin=+490 vs ShFin_pt=-124 → 부호 반전. SwFin=508 vs SwFin_pt=389 → 23% 차이(부호 동일). 단, 계면 근사 창(2nm×2nm×1nm)은 임의 설정값이라 절대 수치보다 '무시 못 할 정도로 다르다'는 방향성만 신뢰할 것."
+    note: "체적평균이 실제 반전층(계면) 응력을 상당히 희석/왜곡시킬 수 있다는 게 baseline 1점에서 확인됨 — 최종 정의는 스윕 데이터 전체(오프셋이 조건마다 일정한지 여부)를 보고 결정."
+    point_estimate_caveat: "SlFin_pt(-3482MPa, 2nm×2nm×1nm 창) vs SlFin_pt2(-3508MPa, 1nm×1nm×0.5nm 창) 비교 결과 SlFin_pt_conv_pct=-0.8% — 수렴 확인됨(2026-08-06). 즉 체적평균과의 53.9% 차이는 근사 창 노이즈가 아니라 실제 물리적 차이로 판단됨. 단, 이 fin은 tri-gate라 게이트 계면이 상단(top)/양 옆면(sidewall) 셋인데 지금 확인한 건 top 계면뿐 — 어느 계면을 대표값으로 볼지는 여전히 팀 판단 필요."
 
 # --- Strain_Impact 응력-이동도 결합 검증 (Phase 0 체크리스트 항목) -------
 verification:

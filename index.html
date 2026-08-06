@@ -155,7 +155,7 @@ code{background:var(--panel2);padding:1px 5px;border-radius:4px;font-size:12px}
     <strong>칸을 클릭하면 첨부물 업로드</strong> (GitHub 연동 필요)</div>
   <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--line);display:flex;gap:8px;align-items:center;flex-wrap:wrap">
     <span style="color:var(--tx3);font-size:12px">위 격자에 아직 칸이 없어도(= CSV 를 아직 아무도 안 올렸어도) Run ID 를 직접 입력해서 사진·메모를 먼저 올릴 수 있다:</span>
-    <input type="text" id="manualRunId" placeholder="예: G30_R50" style="width:120px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:5px 8px;font-size:12px">
+    <input type="text" id="manualRunId" placeholder="예: G00_F00" style="width:120px;background:var(--bg);border:1px solid var(--line);border-radius:6px;color:var(--tx);padding:5px 8px;font-size:12px">
     <button onclick="openAttachModalManual()">첨부물 열기</button>
   </div>
 </div>
@@ -352,16 +352,26 @@ async function toggleProgress(taskNum,owner,el,statId){
 
 // ★ 2026-08-05: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
 // Stress Transfer Efficiency(STE) 프레이밍으로 전환하며 peopleBeanTcNm()
-// 기반 추천 로직을 제거했다 — README.md 참고. FR 이 클수록 탄성 완화가
-// 커져 STE 가 낮아질 수 있다는 가설만 있고 확정된 임계값은 없으므로,
-// 지금은 조건에 상관없이 동일한 추천만 보여준다.
+// 기반 추천 로직을 제거했다 — README.md 참고.
+// ★ 2026-08-06 갱신(1): STE 정규화 방법의 실제 구현이 확인됐다(체적평균 — 단일
+// "채널 인접 지점"이 아니라 ChFin 영역 전체(핀 전체 높이·폭·채널길이)의
+// 체적평균, baseline/finfet_svisual_stress.tcl 참고). 이전 문구가 가리키던
+// "채널 인접 지점"은 실제로 채택된 방식이 아니었으므로 문구를 정정.
+// ★ 2026-08-06 갱신(2): 팀이 이 체적평균 방식을 STE 공식 정의로 최종 채택함
+// (params.yaml stress_transfer_efficiency.normalization.adopted: true).
+// 다만 게이트 산화막 계면(실제 반전층) 근처와 체적평균이 값이 얼마나
+// 다른지는 아직 검증 전 — finfet_svisual_stress.tcl에 계면 인접 단일점
+// 근사(SlFin_pt 등)를 추가해뒀고, baseline(G50_F0) 실행 결과로 검증할
+// 예정이다. 그래서 조건별로 다른 추천을 하지는 않고, 동일한 추천에 최신
+// 상태만 반영해서 보여준다.
 // 이 격자점에 뭐가 더 필요할지 — 이 한 줄이 "AI 추천". 업로드를 강제하지 않고 그냥 알려주기만 한다.
 function attachRecommendHtml(runId){
   const m=runId.match(/^G([\d.]+)_F([\d.]+)$/i);
   if(!m) return '📋 추천: 소자 사진(구조든 응력 분포든)을 하나 이상 남겨주세요.';
   const ge=parseFloat(m[1]), fr=parseFloat(m[2]);
   return `📋 추천: 이 조건(Ge ${ge}%, FR ${fr}nm)의 SiGe/Si 계면 단면 사진을 남겨주세요 — `+
-    `STE 정규화 방법이 확정되면(README.md "확정 필요 항목" 참고) 채널 인접 지점 사진이 특히 중요해집니다.`;
+    `STE 정규화는 ChFin 영역 전체(단일 지점 아님)의 체적평균으로 팀 채택 확정됐습니다(계면 근처와의 `+
+    `오차는 검증 예정, baseline/README.md "Phase 0에서 반드시 할 일" 참고) — 채널(ChFin) 전체에 걸친 SiGe/Si 계면 사진이 특히 중요합니다.`;
 }
 
 // 첨부물 업로드 모달 — 격자 칸 클릭으로 연다. 격자에 칸이 아직 없으면(=CSV 없음) 아래 수동 입력으로도 연다.

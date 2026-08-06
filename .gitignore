@@ -21,6 +21,16 @@ scratch/
 !runs/*.csv
 !analysis/*.csv
 
+# ===== 2026-08-06: Synopsys Sentaurus 라이선스 예제 원본 — public repo 재배포 위험 =====
+# 아래 4개는 Munkang Choi(Synopsys, 2013) 표준 예제를 기반으로 한 실제 스크립트다.
+# 상용 EDA 툴 라이선스 예제는 재배포가 금지돼 있는 경우가 많아, 확인 전까지는
+# public 저장소에 올리지 않기로 함(팀 판단, 2026-08-06). 파일 자체는 로컬에
+# 그대로 두고 각자 실제 Sentaurus 작업에 쓴다 — git에서만 제외.
+baseline/finfet_sprocess.scm
+baseline/finfet_sdevice.cmd
+baseline/finfet_svisual_stress.tcl
+baseline/finfet_svisual_extract.tcl
+
 # ===== 일반 =====
 __pycache__/
 *.pyc

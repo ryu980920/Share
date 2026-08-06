@@ -38,7 +38,7 @@ Synopsys Sentaurus 표준 예제 `FinFET_14nm`(Munkang Choi, Synopsys, 2013 — 
 | GeMoleFraction 기본값 (pMOS) | **0.50 ← 공칭(baseline) 조건** |
 | 대칭 조건 | half-fin (Ymin=0, Ymax=0.5×Fpitch) |
 | 게이트 | 이 서브구조엔 게이트 재질 없음 (순수 응력 계산용) |
-| Esd (S/D-채널 가로 근접거리) | 이미 파라미터화되어 있음 |
+| Esd (S/D-채널 가로 근접거리) | 7.5nm — ⚠ 2026-08-06 정정: 실제 스크립트 확인 결과 스윕 가능한 매크로 변수가 아니라 **고정 상수값**이었음(스윕 변수 아님). 이전 문서에서 "이미 파라미터화"라고 적었던 건 실제 스크립트를 못 본 상태에서의 추정이었고, 틀렸음 |
 | 응력 출력 | `StressELXX/YY/ZZ` 필드가 이미 doping 명령으로 출력되고 있음 — 추출 자체는 이미 가능, 후처리만 하면 됨 |
 
 ### 변수 X — Ge 조성(%)
@@ -47,7 +47,7 @@ Synopsys Sentaurus 표준 예제 `FinFET_14nm`(Munkang Choi, Synopsys, 2013 — 
 
 ### 변수 Y — FR (리세스 깊이, fin 바닥 아래 방향, nm)
 
-**⚠ 스크립트에 아직 없는 변수다.** Esd 와 같은 방식(polyhedron 좌표에 변수 추가)으로 신규 추가해야 한다 — 정확한 문법은 미확인이므로 아래 "절대 규칙" 참고. Gendron-Hansen 2015(SISPAD)는 원문에 "FR 10nm 이상에서 응력 최대"라고 명시했다 (단, 결함 형성 여부는 그 논문의 범위 밖).
+**★ 2026-08-06 구현 완료.** `finfet_sprocess.scm`에 FR이 0보다 클 때만 실행되는 조건부 리세스 식각 로직을 추가함 — 넓은 STI 영역(Oxide)과 fin 바로 아래 좁은 영역(SiStop) 둘 다 제거하도록 구현. FR=0일 때는 이 로직이 아예 실행되지 않아 원본 예제와 동일한 구조가 나옴을 코드 구조로 확인(회귀 테스트 완료). FR>0 케이스는 아직 실제 Sentaurus 실행으로 미검증. Gendron-Hansen 2015(SISPAD)는 원문에 "FR 10nm 이상에서 응력 최대"라고 명시했다 (단, 결함 형성 여부는 그 논문의 범위 밖) — 이 근거로 스윕 값(아래 참고)의 하단부를 0/10nm로 잡았다.
 
 ### Vegard's law (명목 응력 계산용)
 
@@ -65,10 +65,10 @@ STE = 채널 인접 지점의 실제 응력(Sentaurus StressEL 출력)
       Ge% 로 결정되는 명목 응력(Vegard's law 기반)
 ```
 
-> **⚠ 확정 필요 (팀 미확정 — 임의로 정하지 않음)**
-> - "채널 인접"으로 볼 정확한 지점(좌표 기준)이 아직 안 정해졌다.
-> - 응력을 GPa 로 환산하는 정확한 방법(명목 응력 계산에 어떤 탄성 상수를 쓸지 포함)이 아직 안 정해졌다.
-> - 이 두 가지가 확정되기 전까지 STE 수치는 "참고용"이지 "결론"이 아니다.
+> **⚠ 2026-08-06 갱신 — 방법은 확인됐지만 "잠정(provisional)" 상태다**
+> - "채널 인접" 지점은 실제로 단일 좌표가 아니라 **ChFin 영역 전체의 체적평균**으로 구현돼 있다 (`baseline/finfet_svisual_stress.tcl`). 응력을 MPa로 환산하는 방법(StressEL 적분/체적, /1.0e6)도 확인됨.
+> - 다만 G50_F0에서 체적평균(SlFin=-2262MPa)과 게이트 계면 인접 단일점 근사(SlFin_pt=-3482MPa)를 실측 비교하니 **53.9% 차이 + 한 성분(ShFin)은 부호까지 반전**되는 걸 확인 — 무시 못 할 차이라 지금 하나로 확정하지 않았다.
+> - **당장 결론 내지 않고, 남은 24격자점 스윕에서 체적평균/계면 단일점을 둘 다 뽑아 모은 뒤, 스윕이 끝나면 최종 STE 정의를 결정**하기로 함 (`baseline/params.yaml`의 `stress_transfer_efficiency.normalization` 참고). 그때까지 STE 수치는 "참고용"이지 "결론"이 아니다.
 
 핵심 방법론과 검증 이력은 [docs/technical-notes.md](docs/technical-notes.md) 에 정리할 예정 — 선행연구 목록, 자체 감사로 찾아낸 위험 항목, 남은 확인 필요 항목 전부 포함.
 
@@ -123,7 +123,7 @@ STE 를 사람마다 다른 지점/다른 환산 방식으로 계산하면, 지�
 
 ---
 
-## Run ID 명명 규칙 (제안 — 팀 확정 필요)
+## Run ID 명명 규칙
 
 ```
 G{Ge조성%}_F{FR_nm}
@@ -132,19 +132,19 @@ G{Ge조성%}_F{FR_nm}
 | 예시 | 의미 |
 |---|---|
 | `G50_F10` | Ge 조성 50%(공칭), FR(리세스 깊이) 10nm |
-| 공칭(baseline) 격자점 | `G50_F0` (또는 FR=0 이 예제 원본 상태와 같은지부터 확인 필요) |
+| 공칭(baseline) 격자점 | `G50_F0` — FR=0이 예제 원본과 동일 구조임을 코드 구조(리세스 로직이 FR=0에서는 실행 안 됨)로 확인함(2026-08-06) |
 
-> ⚠ 이 표기는 **확정이 아니라 팀 논의용 제안**이다. 기존 `G{Ge%}_R{리세스깊이}` 표기와 헷갈리지 않도록 R 대신 F(FR)를 썼다 — 팀이 다른 표기를 원하면 바꿀 것.
+> ★ 이 표기는 실제로 정착된 컨벤션이다 (대시보드·스크립트·CSV 전부 이 형식 사용 중). 옛 `G{Ge%}_R{리세스깊이}` 표기(R)는 FR 도입 전 잔재였고 지금은 F로 통일됨 — 대시보드 입력창의 예시 placeholder도 `G00_F00`으로 정정해뒀다(2026-08-06).
 
-`data.csv` 의 필수 컬럼명은 정확히 `run_id, stress_GPa` (대소문자 구분). `ste` 컬럼은 STE 정규화 방법이 확정되기 전까지 선택 사항이다 — 있으면 `build.py` 가 통과시키기만 하고 계산하지는 않는다. 틀리면 병합이 깨진다.
+`data.csv` 의 필수 컬럼명은 정확히 `run_id, stress_GPa` (대소문자 구분). `ste` 컬럼은 STE 정규화 방법이 provisional 상태라 여전히 선택 사항이다 — 있으면 `build.py` 가 통과시키기만 하고 계산하지는 않는다. 틀리면 병합이 깨진다.
 
 ---
 
 ## ⚠ 확정 필요 항목 (팀 논의 우선순위)
 
-1. **FR(리세스 깊이) 변수를 SDE 스크립트에 추가하는 정확한 문법** — Esd 파라미터화 방식을 참고해야 하는데, 정확한 polyhedron 좌표 수정 문법은 실제 Sentaurus 에서 테스트해봐야 한다 (지어내지 않음, `baseline/finfet_sprocess.scm` TODO-FR 참고).
-2. **STE 정규화 방법** — 어떤 지점을 "채널 인접"으로 볼지, 응력을 GPa 로 어떻게 환산할지.
-3. **Ge%×FR 스윕 격자 값** — 공칭 Ge% 50% 를 중심으로 몇 단계씩 스윕할지 아직 미정.
+1. ~~FR(리세스 깊이) 변수를 SDE 스크립트에 추가하는 정확한 문법~~ — **2026-08-06 구현 완료** (`baseline/finfet_sprocess.scm`에 조건부 리세스 식각 로직 추가). FR=0 회귀 테스트 통과, FR>0은 아직 실제 Sentaurus 실행 미검증(tasks.js #1).
+2. **STE 정규화 방법 — provisional** — 체적평균(현재 구현) vs 계면 인접 단일점, G50_F0 실측 비교로 53.9% 차이 확인됨. 25격자점 스윕 데이터로 최종 결정 예정(`baseline/params.yaml` `stress_transfer_efficiency.normalization` 참고).
+3. ~~Ge%×FR 스윕 격자 값~~ — **2026-08-06 확정**: Ge% [30,40,50,60,70](50% 중심), FR [0,10,20,30,35](35nm = fin 전체 높이와 일치). `baseline/params.yaml` `doe.values_confirmed: true`.
 4. **"Stress Transfer Efficiency" 용어의 선행 사용(Choi 2012) 문제를 발표자료에서 어떻게 언급할지** — 팀은 검증하지 않기로 했지만, Q&A 대응 문장은 미리 준비가 필요할 수 있다.
 
 상세 근거는 [docs/technical-notes.md](docs/technical-notes.md) 참고 (재작성 예정).
@@ -157,10 +157,11 @@ G{Ge조성%}_F{FR_nm}
 index.html      대시보드 (GitHub Pages 루트)
 tasks.js        과제 정의 — 대시보드에서 클릭하면 상세가 뜬다
 baseline/       공통 기준. PR 로만 수정
-  params.yaml     모든 수치의 유일한 출처 (Ge%×FR 스윕 값 TODO)
-  finfet_sprocess.scm  SDE/SProcess 구조 스크립트 ★골격 — FR 변수 추가 지점만 TODO-FR 표시, 미검증
-  finfet_sdevice.cmd   SDevice 커맨드 ★골격 — STE 추출 지점 TODO 표시, 미검증
-analysis/       공용 스크립트. 지표 정의가 여기 한 곳에만 있다 (STE 계산 로직은 구조만 잡고 TODO)
+  params.yaml     모든 수치의 유일한 출처 (Ge%×FR 스윕 값 확정됨, STE 정규화는 provisional)
+  finfet_sprocess.scm  SDE/SProcess 구조 스크립트 — 실제 원본 내용(2026-08-06). ⚠ 라이선스 문제로 git엔 없음(.gitignore), 로컬 전용
+  finfet_sdevice.cmd   SDevice 커맨드 — 실제 원본 내용(2026-08-06). ⚠ 위와 동일, git엔 없음
+  finfet_svisual_stress.tcl / finfet_svisual_extract.tcl  응력/전기 지표 추출 SVisual 스크립트(2026-08-06 신규). ⚠ 마찬가지로 git엔 없음 — 스윕 담당자끼리 팀 채널로 직접 파일 공유해서 동일 버전 쓸 것
+analysis/       공용 스크립트. 지표 정의가 여기 한 곳에만 있다 (STE 최종 계산식은 스윕 데이터 확보 후 provisional → 확정)
 runs/           각자의 결과. 자기 폴더만 건드린다
 docs/ROLES.md   역할 분담 · 격자 분할(3인) · 일정
 docs/technical-notes.md  검증 기록 (재작성 예정)
@@ -213,11 +214,11 @@ GitHub API 로 직접 `analysis/progress.json`·`runs/attachments/` 에 커밋�
 
 ## 일정 요약
 
-> 오늘(2026-08-05) 기준 재확인 — 기존 4주 일정(W1 8/03~W4 8/31) 틀은 유지하되, 프레이밍 전환으로 하루 이틀 늦어진 상태다. 상세는 [docs/ROLES.md](docs/ROLES.md) 에서 조정.
+> 2026-08-06 기준 재확인 — 기존 4주 일정(W1 8/03~W4 8/31) 틀 유지, W1 마감까지 3일 남음. 상세는 [docs/ROLES.md](docs/ROLES.md) 에서 조정.
 
 | Phase | 기간 | 내용 |
 |---|---|---|
-| P0 | W1 · 8/03–8/09 | 전원 공통 — FR 변수 추가 문법 확인, STE 정규화 방법 확정, baseline 재현, 3인 값 대조 |
+| P0 | W1 · 8/03–8/09 | 전원 공통 — FR 변수(구현 완료, 실행 검증 중), 스윕 값(확정됨), STE 정규화(provisional), baseline 재현·3인 값 대조(진행 중) |
 | P1 | W2 · 8/10–8/16 | 1차원 단독 스윕 · 체크포인트 |
 | P2 | W3 · 8/17–8/23 | 2차원 DoE 실행 |
 | P3 | W4 · 8/24–8/31 | 병합 · STE 지도 · 발표 |

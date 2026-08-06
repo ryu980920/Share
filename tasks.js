@@ -20,7 +20,7 @@ const PHASES = [
 
 const TASKS = [
 { n:1, phase:"P0", oi:"all", owner:"전원", mode:"joint", title:"FR(리세스 깊이) 변수 SDE 추가 방법 확인", flag:"최우선·위험",
-  purpose:"FR(fin 바닥 아래 방향 리세스 깊이)은 Sentaurus FinFET_14nm 예제 스크립트에 아직 없는 완전히 새로운 변수다. Esd(S/D-채널 가로 근접거리)가 이미 파라미터화돼 있으니 그 방식을 참고해 FR 을 추가해야 하는데, 정확한 문법은 아무도 확인하지 않았다. 이게 안 되면 Y축 스윕 자체가 불가능하다 — 프로젝트 전체를 막는 게이트.",
+  purpose:"★2026-08-06 갱신: finfet_sprocess.scm에 FR이 0보다 클 때만 실행되는 조건부 리세스 식각 로직으로 구현 완료(FR=0 회귀 테스트 통과 — 원본과 동일 구조 확인). 단, FR>0 케이스는 아직 실제 Sentaurus 실행으로 검증되지 않았다 — 최소 1개 이상의 FR>0 조건을 실제로 돌려서 리세스가 의도대로 파이는지 확인해야 이 과제가 완료된다.",
   fixed:null, sweep:null,
   todo:["예제 스크립트에서 Esd 가 어떤 함수 호출(polyhedron 좌표 등)로 파라미터화됐는지 정확히 확인","같은 방식으로 FR 을 fin 바닥 아래 방향 좌표에 추가하는 문법을 실제 Sentaurus 에서 테스트","성공하면 Workbench 스윕 파라미터로 등록","SVisual 로 FR 값을 바꿔가며 형상이 의도대로 파이는지 확인 → Issue 에 단면 첨부","실패/막히면 즉시 팀 공유 — 지어내서 진행하지 말 것"],
   change:"baseline/finfet_sprocess.scm 의 TODO-FR 자리에 실제로 동작하는 코드가 채워진다.",
@@ -39,7 +39,7 @@ const TASKS = [
   out:["Issue 코멘트 (파일 제출 불필요)"] },
 
 { n:3, phase:"P0", oi:"all", owner:"전원", mode:"joint", title:"Ge%/FR 스윕 값 + STE 정규화 방법 확정", flag:"게이트",
-  purpose:"baseline/params.yaml 의 doe.x_levels/y_levels 는 지금 placeholder(예시)다. 그리고 STE(응력 전달 효율) 자체가 '어느 지점을 채널 인접으로 볼지', '응력을 GPa로 어떻게 환산할지'가 아직 안 정해져 계산할 수 없다. #1 결과와 #8(남다연의 정규화 지점 후보 조사) 결과를 바탕으로 두 가지를 한 번에 확정해야 이후 모든 과제가 의미를 가진다.",
+  purpose:"★2026-08-06 갱신: Ge%/FR 스윕 값은 확정됨(x_levels=[30,40,50,60,70], y_levels=[0,10,20,30,35], values_confirmed:true) — 25격자점 본 스윕 시작 가능. STE 정규화 방법은 provisional 상태: 체적평균(현재 구현)과 계면 인접 단일점을 G50_F0에서 실측 비교하니 53.9% 차이(+ 한 성분 부호 반전)가 나와 지금 하나로 확정하지 않음 — 남은 24격자점 스윕에서 둘 다 뽑아 모은 뒤 최종 결정하기로 함.",
   fixed:null, sweep:null,
   todo:["#1 에서 확인한 FR 가능 범위(fin_height_nm=35nm 를 넘지 않는 현실적 범위) 산정","Ge% 는 공칭 50% 를 중심으로 대칭적인 스윕 범위 검토","격자 크기 결정 — 3인 체제이므로 x_levels 를 3의 배수로 잡으면 열 분할(ROLES.md 2절)이 깔끔하다","남다연의 STE 정규화 지점 후보(#8)를 놓고 팀 논의 → 채널 인접 지점 확정","응력을 GPa 로 환산하는 방법 확정","baseline/params.yaml 의 doe 섹션 + stress_transfer_efficiency.normalization 섹션을 확정값으로 채워 PR"],
   change:"x_levels, y_levels, values_confirmed, baseline_point, normalization.channel_adjacent_point, normalization.stress_to_GPa_method — 이 6개 필드를 확정값으로 채운다.",
@@ -48,7 +48,7 @@ const TASKS = [
   out:["baseline/params.yaml (PR, 나머지 2명 승인)"] },
 
 { n:4, phase:"P0", oi:"all", owner:"전원", mode:"joint", title:"baseline 구조 재현 (SDE)", flag:"위험",
-  purpose:"baseline/finfet_sprocess.scm 의 TODO 지점을 채워 실제로 도는 구조 스크립트를 만든다 — FR 추가(#1) 결과를 실제 baseline 구조에 반영한다.",
+  purpose:"★2026-08-06 갱신: finfet_sprocess.scm이 실제 원본 스크립트로 채워졌고, G50_F0(Strain_Impact=0/1) 조건에서 실제로 end-to-end 실행되어 검증 결과(IdSat_norm 등)가 나온 것까지 확인됨(유용성) — 구조 자체는 동작한다. 다만 3인이 각자 독립적으로 돌려 서로 값이 일치하는지 대조하는 건 아직(#5에서 별도 처리).",
   fixed:[["구조 출발점","Sentaurus FinFET_14nm 예제 (Munkang Choi, Synopsys, 2013)"]], sweep:null,
   todo:["예제의 SDE/SProcess 스크립트를 finfet_sprocess.scm 위치에 그대로 복사","#1 에서 검증된 TODO-FR 코드를 반영","TODO-STRESS-MESH: 계면(SiGe/Si) 국소 메쉬 정밀화 추가","SVisual 로 단면 캡처 → Issue 에 첨부"],
   change:"cuboid/재질/메쉬 정의를 예제 원본 문법에 맞춰 실제 채워 넣는다 (지금은 자리표시자).",
