@@ -28,8 +28,11 @@ AI가 실제 Scheme/커맨드 문법을 처음부터 지어내지 않은 이유�
 - [ ] 컨택 이름이 SDevice 의 `Electrode` 이름과 일치하는지
 - [ ] StressELXX/YY/ZZ 가 실제로 Plot 블록에 포함돼 있는지, 단위가 무엇인지 확인
 - [ ] SiGe/Si 계면 국소 메쉬가 실제로 조밀해졌는지 SVisual 로 눈으로 확인
+- [x] **Strain_Impact=1/0 비교로 응력→전기 결합이 실제로 작동하는지 확인** (2026-08-06, G50_F0 기준. IdSat_norm +227% 등, 방향성 문헌과 일치. 상세는 `params.yaml`의 `verification.strain_impact_coupling` 참고)
 
 **검증이 끝나면 PR을 올리고 다른 팀원이 승인한다.** 그 PR이 머지되어야 W2가 시작된다.
+
+> ⚠️ 2026-08-06 항목은 팀 판단으로 PR 절차를 생략하고 main에 직접 반영함 (사용자 확정, devlog 참고).
 
 ## 변경 이력
 
@@ -40,3 +43,4 @@ AI가 실제 Scheme/커맨드 문법을 처음부터 지어내지 않은 이유�
 | 2026-08-04 | 2인→3인 복귀 (주수빈 재합류), 열 분할 2등분→3등분 | 인원 변경 | — |
 | 2026-08-04 | `bcat_sde.scm`/`bcat_sdevice.cmd` → `finfet_sde.scm`/`finfet_sdevice.cmd` 로 파일명 변경 | 예전 BCAT DRAM 프로젝트 파일명이 그대로 남아있어 현재 주제(FinFET)와 안 맞고 혼동을 유발함 — 내용은 이미 FinFET 용으로 재작성돼 있었으나 이름만 안 바뀌어 있었다 | — |
 | 2026-08-05 | 결함 경계(People-Bean/Luryi-Suhir) 프레이밍 폐기 → Stress Transfer Efficiency(STE) 프레이밍 전환. `finfet_sde.scm` → `finfet_sprocess.scm` 로 재개명, FR(리세스 깊이) 변수 신규 도입, params.yaml geometry/materials 실제 값 확정(Gate 25nm, Fin height 35nm 등) | baseline 치수(fin 반폭 7.5nm)에서 결함 경계 프레이밍이 판별력을 잃어(Ge 42~100% 전 구간 "무제한 보호") 프레이밍 전환. 자세한 경위는 README.md | — |
+| 2026-08-06 | Strain_Impact=1/0 SWB 비교로 응력-이동도 결합 검증 완료 (G50_F0). SVisual로 ChFin/SDepi 재질·도핑(BActive/BTotal)·Esd 언더컷 형상도 별도 확인 | Phase 0 baseline 신뢰성 확보 — 스윕 본격 시작 전에 물리 결합이 실제로 작동하는지 확인 필요했음 | — (PR 생략, 직접 반영) |

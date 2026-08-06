@@ -72,6 +72,22 @@ stress_transfer_efficiency:
     stress_to_GPa_method: null      # ⚠ TODO — StressEL 출력을 GPa로 환산하는 방법. 팀 확정 필요
     note: "이 두 항목이 null 인 동안 ste 값은 참고용이지 결론이 아니다 (README.md 참고)"
 
+# --- Strain_Impact 응력-이동도 결합 검증 (Phase 0 체크리스트 항목) -------
+verification:
+  strain_impact_coupling:
+    status: "confirmed"           # Strain_Impact=1 vs 0 SWB 비교로 응력->전기 결합이 실제로 작동하는지 확인
+    checked_point: "G50_F0 (Ge=0.50, FR=0)"
+    checked_date: "2026-08-06"
+    checked_by: "유용성 (Claude 보조 확인)"
+    evidence_csv: "baseline/verification_strain_impact_G50F0.csv"
+    key_deltas:
+      IdSat_norm: "1.704e-4(S=0) -> 5.574e-4(S=1), +227%"
+      IdLin_norm: "7.189e-5(S=0) -> 1.984e-4(S=1), +176%"
+      gmSat: "4.925e-5(S=0) -> 1.063e-4(S=1), +116%"
+      VtiSat_abs_V: "0.525(S=0) -> 0.403(S=1), -23% (pMOS |Vth| 감소)"
+      SSSat_mV_dec: "549.8(S=0) -> 183.5(S=1)"
+    note: "방향성(Ion 증가, |Vth| 감소)이 eSiGe pMOS 문헌(압축응력->정공 이동도 증가, 밸런스밴드 효과로 |Vth| 감소)과 일치. SDevice의 응력->전기 결합이 실제로 작동함을 확인. 단 SSSat 절대값(183~550mV/dec)은 이상적 60mV/dec 대비 매우 높음 — gate_material_present:false(게이트 스택 미완성) 영향으로 추정, 별도 확인 필요."
+
 # --- [제거됨] 결함 경계 임계두께 공식 (people_bean_1985 / luryi_suhir_1986) --
 # 2026-08-05 이전 버전엔 이 섹션이 있었다. baseline 치수(fin 반폭 7.5nm)에서
 # Ge 42~100% 전 구간이 이론상 "무제한 보호"로 계산되어 결함 경계 프레이밍을
