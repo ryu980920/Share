@@ -1,0 +1,300 @@
+{
+ "generated": "2026-08-06 17:55",
+ "x_levels": [
+  30.0,
+  40.0,
+  50.0,
+  60.0,
+  70.0
+ ],
+ "y_levels": [
+  0.0,
+  10.0,
+  20.0,
+  30.0,
+  40.0
+ ],
+ "done": 0,
+ "total": 25,
+ "values_confirmed": false,
+ "points": [
+  {
+   "run_id": "G30_F0",
+   "G": 30.0,
+   "R": 0.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G30_F10",
+   "G": 30.0,
+   "R": 10.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G30_F20",
+   "G": 30.0,
+   "R": 20.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G30_F30",
+   "G": 30.0,
+   "R": 30.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G30_F40",
+   "G": 30.0,
+   "R": 40.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G40_F0",
+   "G": 40.0,
+   "R": 0.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G40_F10",
+   "G": 40.0,
+   "R": 10.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G40_F20",
+   "G": 40.0,
+   "R": 20.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G40_F30",
+   "G": 40.0,
+   "R": 30.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G40_F40",
+   "G": 40.0,
+   "R": 40.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G50_F0",
+   "G": 50.0,
+   "R": 0.0,
+   "done": false,
+   "owner": "",
+   "has_photo": true,
+   "n_photos": 3,
+   "has_notes": true,
+   "notes_preview": "## 무엇을 바꿨나\n- 새로 바꾼 건 없음 — baseline(G50_F0, Ge=0.50/FR=0) 신뢰성 검증 단계. SVisual(`n1_e_fps`)로 구조를 직접 열어서 재질/도핑/형상을 눈으로 확인\n- `01_전체구조_overview.png` — 구조 전체를 처음 열어본 컷.…"
+  },
+  {
+   "run_id": "G50_F10",
+   "G": 50.0,
+   "R": 10.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G50_F20",
+   "G": 50.0,
+   "R": 20.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G50_F30",
+   "G": 50.0,
+   "R": 30.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G50_F40",
+   "G": 50.0,
+   "R": 40.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G60_F0",
+   "G": 60.0,
+   "R": 0.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G60_F10",
+   "G": 60.0,
+   "R": 10.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G60_F20",
+   "G": 60.0,
+   "R": 20.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G60_F30",
+   "G": 60.0,
+   "R": 30.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G60_F40",
+   "G": 60.0,
+   "R": 40.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G70_F0",
+   "G": 70.0,
+   "R": 0.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G70_F10",
+   "G": 70.0,
+   "R": 10.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G70_F20",
+   "G": 70.0,
+   "R": 20.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G70_F30",
+   "G": 70.0,
+   "R": 30.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  },
+  {
+   "run_id": "G70_F40",
+   "G": 70.0,
+   "R": 40.0,
+   "done": false,
+   "owner": "",
+   "has_photo": false,
+   "n_photos": 0,
+   "has_notes": false,
+   "notes_preview": ""
+  }
+ ],
+ "xcheck": [],
+ "files": [],
+ "problems": []
+}

@@ -11,6 +11,10 @@ build.py — runs/ 의 스윕 CSV 들을 읽어 지표를 정리하고 격자표
   CSV 에 있으면 그대로 통과시키기만 한다 (계산은 하지 않는다). 자세한
   경위는 README.md 참고.
 
+★ 2026-08-06: runs/ 에 스윕 CSV 가 하나도 없어도 더 이상 그냥 종료하지 않는다.
+  runs/attachments/<run_id>/ 에 사진·notes.md 만 먼저 올라온 경우(격자점 실행
+  전)에도 그것만이라도 대시보드에 보이도록 status.json 을 만든다.
+
 입력  runs/<이름>_<스윕이름>.csv      wide 형식: 한 줄 = 한 격자점
       run_id, stress_GPa [, ste, Vth_V, Ion_A_um ...]
       runs/attachments/<run_id>/{사진 파일들(파일명 자유), notes.md}   (선택)
@@ -41,6 +45,8 @@ OUT_JSON = ROOT / "analysis" / "status.json"
 REQUIRED = ["run_id", "stress_GPa"]   # ste 는 아직 정규화 미확정이라 필수 아님 — 있으면 통과시킴
 XCHECK_TOL = 0.05          # 교차검증 허용 편차 (주 지표 stress_GPa 기준)
 XCHECK_METRIC = "stress_GPa"
+
+MU_COLUMNS = ["run_id", "Ge_percent", "FR_nm", "owner"]  # mu 가 항상 최소로 가져야 하는 컬럼
 
 
 # ----------------------------------------------------------------------
@@ -168,129 +174,145 @@ def main():
 
     files = sorted(p for p in (ROOT / "runs").glob("*.csv")
                    if not p.stem.startswith("_"))
+
+    problems, xcheck = [], []
+    mu = pd.DataFrame(columns=MU_COLUMNS)   # 스윕 데이터가 없으면 이 빈 상태로 5절까지 간다
+
     if not files:
-        print("runs/ 에 CSV 가 없다. README.md 의 형식을 참고할 것.", file=sys.stderr)
-        return 1
+        # ★ 스윕 CSV 가 하나도 없어도 여기서 끝내지 않는다. runs/attachments/
+        #   에 사진·notes.md 만 먼저 올라온 경우(아직 격자점 실행 전)에도
+        #   그것만이라도 대시보드에 보이도록 status.json 을 만든다.
+        print("runs/ 에 아직 스윕 CSV 가 없다 — 실행 데이터 없이 첨부물(사진/메모)만")
+        print("있는 상태로 analysis/status.json 을 만든다. (형식은 README.md 참고)")
+        print()
+    else:
+        print("=" * 66)
+        print(" 1. 파일 읽기")
+        print("=" * 66)
+        rows = []
+        for f in files:
+            owner = f.stem.split("_")[0]
 
-    print("=" * 66)
-    print(" 1. 파일 읽기")
-    print("=" * 66)
-    rows, problems = [], []
-    for f in files:
-        owner = f.stem.split("_")[0]
+            # --- Sentaurus Workbench 변수표 형식 ---
+            if looks_like_swb(f):
+                try:
+                    recs, pending = read_swb(f, cfg)
+                except Exception as e:
+                    print(f"  [실패] {f.name}: {e}"); problems.append(f.name); continue
+                if not recs:
+                    print(f"  [건너뜀] {f.name}: 유효한 실험 행이 없다"); continue
+                for r in recs:
+                    r.update({"owner": owner, "source": f.name, "warn": ""})
+                    r.update(scan_attachments(r["run_id"], acfg))
+                    rows.append(r)
+                tag = f" (아직 안 돌아간 조건 {pending}개)" if pending else ""
+                print(f"  [OK] {f.name:32s} {owner:8s} SWB 변수표 · 조건 {len(recs)}개{tag}")
+                print(f"        {', '.join(r['run_id'] for r in recs)}")
+                continue
 
-        # --- Sentaurus Workbench 변수표 형식 ---
-        if looks_like_swb(f):
+            # --- wide 형식: 한 줄 = 한 격자점 ---
             try:
-                recs, pending = read_swb(f, cfg)
+                df = pd.read_csv(f, comment="#")
             except Exception as e:
                 print(f"  [실패] {f.name}: {e}"); problems.append(f.name); continue
-            if not recs:
-                print(f"  [건너뜀] {f.name}: 유효한 실험 행이 없다"); continue
-            for r in recs:
-                r.update({"owner": owner, "source": f.name, "warn": ""})
-                r.update(scan_attachments(r["run_id"], acfg))
-                rows.append(r)
-            tag = f" (아직 안 돌아간 조건 {pending}개)" if pending else ""
-            print(f"  [OK] {f.name:32s} {owner:8s} SWB 변수표 · 조건 {len(recs)}개{tag}")
-            print(f"        {', '.join(r['run_id'] for r in recs)}")
-            continue
+            miss = [c for c in REQUIRED if c not in df.columns]
+            if miss:
+                print(f"  [실패] {f.name}: 컬럼 {miss} 누락. 발견={list(df.columns)}")
+                print(f"          → 컬럼명은 정확히 run_id,stress_GPa (대소문자 구분). ste 는 있으면 통과시킴")
+                problems.append(f.name); continue
 
-        # --- wide 형식: 한 줄 = 한 격자점 ---
-        try:
-            df = pd.read_csv(f, comment="#")
-        except Exception as e:
-            print(f"  [실패] {f.name}: {e}"); problems.append(f.name); continue
-        miss = [c for c in REQUIRED if c not in df.columns]
-        if miss:
-            print(f"  [실패] {f.name}: 컬럼 {miss} 누락. 발견={list(df.columns)}")
-            print(f"          → 컬럼명은 정확히 run_id,stress_GPa (대소문자 구분). ste 는 있으면 통과시킴")
-            problems.append(f.name); continue
+            ids = []
+            for _, r in df.iterrows():
+                rid = r["run_id"]
+                ge, fr = parse_run_id(rid)
+                warn = ""
+                if pd.notna(r.get("stress_GPa")) and abs(float(r["stress_GPa"])) > 10:
+                    warn = "응력이 10 GPa 초과 — 단위/부호 확인 의심"
+                rec = {"run_id": rid, "owner": owner, "source": f.name,
+                       "Ge_percent": ge, "FR_nm": fr, "warn": warn}
+                for extra in df.columns:
+                    if extra == "run_id":
+                        continue
+                    rec[extra] = r[extra]
+                rec.update(scan_attachments(rid, acfg))
+                rows.append(rec)
+                ids.append(rid)
+            print(f"  [OK] {f.name:32s} {owner:8s} 격자점 {len(ids)}개  {', '.join(map(str, ids))}")
 
-        ids = []
-        for _, r in df.iterrows():
-            rid = r["run_id"]
-            ge, fr = parse_run_id(rid)
-            warn = ""
-            if pd.notna(r.get("stress_GPa")) and abs(float(r["stress_GPa"])) > 10:
-                warn = "응력이 10 GPa 초과 — 단위/부호 확인 의심"
-            rec = {"run_id": rid, "owner": owner, "source": f.name,
-                   "Ge_percent": ge, "FR_nm": fr, "warn": warn}
-            for extra in df.columns:
-                if extra == "run_id":
-                    continue
-                rec[extra] = r[extra]
-            rec.update(scan_attachments(rid, acfg))
-            rows.append(rec)
-            ids.append(rid)
-        print(f"  [OK] {f.name:32s} {owner:8s} 격자점 {len(ids)}개  {', '.join(map(str, ids))}")
+        if not rows:
+            print("\n읽을 수 있는 데이터가 없다 — 첨부물만 있는 상태로 계속 진행한다.",
+                  file=sys.stderr)
+        else:
+            m = pd.DataFrame(rows)
 
-    if not rows:
-        print("\n읽을 수 있는 데이터가 없다.", file=sys.stderr); return 1
-    m = pd.DataFrame(rows)
+            for w in m[m.warn != ""].itertuples():
+                print(f"  [경고] {w.run_id} ({w.source}): {w.warn}")
 
-    for w in m[m.warn != ""].itertuples():
-        print(f"  [경고] {w.run_id} ({w.source}): {w.warn}")
+            # --- 2. 교차검증 -------------------------------------------------
+            print()
+            print("=" * 66)
+            print(f" 2. 교차검증 (같은 격자점을 두 사람이 돌린 경우, 기준 지표: {XCHECK_METRIC})")
+            print("=" * 66)
+            dup = m[m.duplicated("run_id", keep=False)]
+            if dup.empty:
+                print("  중복 실행 없음. → docs/ROLES.md 의 교차검증 1점씩을 아직 안 돌렸다.")
+            elif XCHECK_METRIC not in m.columns:
+                print(f"  {XCHECK_METRIC} 컬럼이 없어 교차검증을 계산할 수 없다.")
+            else:
+                for rid, g in dup.groupby("run_id"):
+                    v = g[XCHECK_METRIC].to_numpy(float)
+                    owners = list(g["owner"])
+                    sp = (float((v.max() - v.min()) / abs(v.mean()))
+                          if np.all(np.isfinite(v)) and v.mean() != 0 else None)
+                    ok = sp is not None and sp <= XCHECK_TOL
+                    xcheck.append({"run_id": rid, "owners": owners, "spread": sp, "ok": ok})
+                    tag = "OK  " if ok else "불일치"
+                    print(f"  [{tag}] {rid:12s} 편차 {('%5.1f%%'%(sp*100)) if sp is not None else '  ?  '}"
+                          f"  ({' vs '.join(owners)})")
+                bad = [x for x in xcheck if not x["ok"]]
+                if bad:
+                    print(f"\n  ★ {len(bad)}개가 허용치({XCHECK_TOL*100:.0f}%)를 넘었다.")
+                    print("    환경 차이(버전/STE 정규화 방식/모델 파라미터)를 의심할 것.")
+                    print("    원인 규명 전에는 STE 지도를 그리지 말 것.")
 
-    # --- 2. 교차검증 -----------------------------------------------------
-    print()
-    print("=" * 66)
-    print(f" 2. 교차검증 (같은 격자점을 두 사람이 돌린 경우, 기준 지표: {XCHECK_METRIC})")
-    print("=" * 66)
-    xcheck = []
-    dup = m[m.duplicated("run_id", keep=False)]
-    if dup.empty:
-        print("  중복 실행 없음. → docs/ROLES.md 의 교차검증 1점씩을 아직 안 돌렸다.")
-    elif XCHECK_METRIC not in m.columns:
-        print(f"  {XCHECK_METRIC} 컬럼이 없어 교차검증을 계산할 수 없다.")
-    else:
-        for rid, g in dup.groupby("run_id"):
-            v = g[XCHECK_METRIC].to_numpy(float)
-            owners = list(g["owner"])
-            sp = (float((v.max() - v.min()) / abs(v.mean()))
-                  if np.all(np.isfinite(v)) and v.mean() != 0 else None)
-            ok = sp is not None and sp <= XCHECK_TOL
-            xcheck.append({"run_id": rid, "owners": owners, "spread": sp, "ok": ok})
-            tag = "OK  " if ok else "불일치"
-            print(f"  [{tag}] {rid:12s} 편차 {('%5.1f%%'%(sp*100)) if sp is not None else '  ?  '}"
-                  f"  ({' vs '.join(owners)})")
-        bad = [x for x in xcheck if not x["ok"]]
-        if bad:
-            print(f"\n  ★ {len(bad)}개가 허용치({XCHECK_TOL*100:.0f}%)를 넘었다.")
-            print("    환경 차이(버전/STE 정규화 방식/모델 파라미터)를 의심할 것.")
-            print("    원인 규명 전에는 STE 지도를 그리지 말 것.")
+            mu = m.drop_duplicates("run_id", keep="first")
 
-    mu = m.drop_duplicates("run_id", keep="first")
+            # --- 3. 진행률 ---------------------------------------------------
+            print()
+            print("=" * 66)
+            print(" 3. DoE 격자 진행률")
+            print("=" * 66)
+            have = {(round(r.Ge_percent, 1), round(r.FR_nm, 1)) for r in mu.itertuples()}
+            planned = [(round(x, 1), round(y, 1)) for x in xl for y in yl]
+            missing = [p for p in planned if p not in have]
+            done_now = len(planned) - len(missing)
+            print(f"  [{'#'*int(30*done_now/len(planned)):<30s}] {done_now}/{len(planned)} "
+                  f"({done_now/len(planned)*100:.0f}%)")
+            if missing:
+                print("  남은 격자점: " + ", ".join(make_run_id(x, y) for x, y in missing[:12])
+                      + (" …" if len(missing) > 12 else ""))
 
-    # --- 3. 진행률 -------------------------------------------------------
-    print()
-    print("=" * 66)
-    print(" 3. DoE 격자 진행률")
-    print("=" * 66)
-    have = {(round(r.Ge_percent, 1), round(r.FR_nm, 1)) for r in mu.itertuples()}
+            # --- 4. 격자표 ----------------------------------------------------
+            print()
+            print("=" * 66)
+            print(f" 4. 격자표 — {args.metric}")
+            print("=" * 66)
+            if args.metric in mu.columns:
+                pv = mu.pivot_table(index="FR_nm", columns="Ge_percent",
+                                    values=args.metric).sort_index(ascending=False)
+                with pd.option_context("display.float_format", lambda v: f"{v:.3e}"):
+                    print(pv.to_string())
+            else:
+                print(f"  ({args.metric} 컬럼이 아직 없다)")
+
+    # --- 5. 저장 (스윕 데이터가 있든 없든 항상 실행) --------------------------
+    # mu 가 비어 있어도(스윕 CSV 없음) 아래 로직은 그대로 동작한다 —
+    # itertuples/필터링은 빈 DataFrame 에도 안전하고, 그러면 모든 격자점이
+    # done=False 로 나오되 runs/attachments/<run_id>/ 첨부물만 채워진다.
     planned = [(round(x, 1), round(y, 1)) for x in xl for y in yl]
-    missing = [p for p in planned if p not in have]
-    done = len(planned) - len(missing)
-    print(f"  [{'#'*int(30*done/len(planned)):<30s}] {done}/{len(planned)} "
-          f"({done/len(planned)*100:.0f}%)")
-    if missing:
-        print("  남은 격자점: " + ", ".join(make_run_id(x, y) for x, y in missing[:12])
-              + (" …" if len(missing) > 12 else ""))
+    have = {(round(r.Ge_percent, 1), round(r.FR_nm, 1)) for r in mu.itertuples()}
+    done = len(planned) - len([p for p in planned if p not in have])
 
-    # --- 4. 격자표 -------------------------------------------------------
-    print()
-    print("=" * 66)
-    print(f" 4. 격자표 — {args.metric}")
-    print("=" * 66)
-    if args.metric in mu.columns:
-        pv = mu.pivot_table(index="FR_nm", columns="Ge_percent",
-                            values=args.metric).sort_index(ascending=False)
-        with pd.option_context("display.float_format", lambda v: f"{v:.3e}"):
-            print(pv.to_string())
-    else:
-        print(f"  ({args.metric} 컬럼이 아직 없다)")
-
-    # --- 5. 저장 ---------------------------------------------------------
     mu.sort_values(["Ge_percent", "FR_nm"]).to_csv(OUT_CSV, index=False)
 
     owner_of = {}
