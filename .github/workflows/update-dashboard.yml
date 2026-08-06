@@ -5,10 +5,20 @@ name: update-dashboard
 on:
   push:
     branches: [main]
-    # .md 문서만 고친 push 는 건드리지 않는다 — 안 그러면 문서 수정할 때마다
-    # 이 워크플로가 status.json/grid.csv 를 다시 커밋해서, 곧바로 이어서 push 하면
-    # 매번 "rejected (fetch first)" 가 뜬다.
-    paths: ['runs/**', 'analysis/**', 'baseline/params.yaml', '!**/*.md']
+    # 일반 문서(README 등)만 고친 push 는 건드리지 않는다 — 안 그러면 문서 수정할
+    # 때마다 이 워크플로가 status.json/grid.csv 를 다시 커밋해서, 곧바로 이어서
+    # push 하면 매번 "rejected (fetch first)" 가 뜬다.
+    # docs/model_choice.md · docs/license_check.md 는 예외 — #7/#9 과제 자동
+    # 체크(analysis/task_rules.yaml)가 이 두 파일의 존재 여부를 보기 때문에
+    # 트리거에 명시적으로 넣어뒀다.
+    paths:
+      - 'runs/**'
+      - 'analysis/**'
+      - 'baseline/params.yaml'
+      - 'docs/model_choice.md'
+      - 'docs/license_check.md'
+      - '!**/README.md'
+      - '!analysis/*.md'
   workflow_dispatch:
 
 permissions:
@@ -30,10 +40,13 @@ jobs:
       - name: 등고선 (데이터가 4점 이상일 때만)
         run: python analysis/contour.py --all-figures || echo "데이터 부족 — 건너뜀"
 
+      - name: 과제 체크박스 자동 갱신 (analysis/task_rules.yaml 기준)
+        run: python analysis/check_tasks.py || true
+
       - name: 결과 커밋
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f analysis/status.json analysis/grid.csv analysis/figures 2>/dev/null || true
-          git diff --staged --quiet || git commit -m "대시보드 자동 갱신 [skip ci]"
+          git add -f analysis/status.json analysis/grid.csv analysis/figures analysis/progress.json 2>/dev/null || true
+          git diff --staged --quiet || git commit -m "대시보드 자동 갱신 + 과제 체크박스 자동 반영 [skip ci]"
           git push
