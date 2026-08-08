@@ -20,7 +20,7 @@ const PHASES = [
 
 const TASKS = [
 { n:1, phase:"P0", oi:"all", owner:"전원", mode:"joint", title:"FR(리세스 깊이) 변수 SDE 추가 방법 확인", flag:"최우선·위험",
-  purpose:"★2026-08-06 갱신: finfet_sprocess.scm에 FR이 0보다 클 때만 실행되는 조건부 리세스 식각 로직으로 구현 완료(FR=0 회귀 테스트 통과 — 원본과 동일 구조 확인). 단, FR>0 케이스는 아직 실제 Sentaurus 실행으로 검증되지 않았다 — 최소 1개 이상의 FR>0 조건을 실제로 돌려서 리세스가 의도대로 파이는지 확인해야 이 과제가 완료된다.",
+  purpose:"★2026-08-07 갱신: FR=15nm(0807.csv, G50_F15) 실제 Sentaurus 실행 완료 및 검증됨(유용성) — SVisual에서 baseline(FR=0)과 15nm 구조를 좌표축이 있는 단면(cutline, C2/C1)으로 직접 비교, TRECH 영역 세로 치수 차이가 약 0.015(=15nm)로 요청값과 일치함을 확인. baseline엔 남아있던 어깨 블록이 15nm 구조에서 그만큼 정확히 깎여 트렌치로 바뀐 것을 좌표로 확인했다 — 전기적 지표(IdSat_norm +12.9%, SSSat -32.9% 등)도 물리적으로 타당한 방향으로 변함. FR=0/FR=15nm 두 값에서 메쉬 생성 성공 + 단면이 의도한 리세스 형상과 일치 → done 조건 충족(유용성 기준). 나머지 2인의 개별 확인은 아직.",
   fixed:null, sweep:null,
   todo:["예제 스크립트에서 Esd 가 어떤 함수 호출(polyhedron 좌표 등)로 파라미터화됐는지 정확히 확인","같은 방식으로 FR 을 fin 바닥 아래 방향 좌표에 추가하는 문법을 실제 Sentaurus 에서 테스트","성공하면 Workbench 스윕 파라미터로 등록","SVisual 로 FR 값을 바꿔가며 형상이 의도대로 파이는지 확인 → Issue 에 단면 첨부","실패/막히면 즉시 팀 공유 — 지어내서 진행하지 말 것"],
   change:"baseline/finfet_sprocess.scm 의 TODO-FR 자리에 실제로 동작하는 코드가 채워진다.",

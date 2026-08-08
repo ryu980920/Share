@@ -23,7 +23,7 @@
 
 ## ⚠️ Phase 0에서 반드시 할 일
 
-- [x] **FR(리세스 깊이) 변수 추가** — `finfet_sprocess.scm`에 조건부 리세스 식각 로직(FR>0일 때만 실행)으로 구현 완료. FR=0 회귀 테스트 통과(원본과 동일 구조). FR>0 케이스는 아직 실제 Sentaurus 실행으로 미검증 (tasks.js #1)
+- [x] **FR(리세스 깊이) 변수 추가** — `finfet_sprocess.scm`에 조건부 리세스 식각 로직(FR>0일 때만 실행)으로 구현 완료. FR=0 회귀 테스트 통과(원본과 동일 구조). **FR=15nm 실제 Sentaurus 실행으로 검증 완료(2026-08-07, 유용성)** — SVisual 좌표축 단면(cutline) 비교로 TRECH 영역이 baseline 대비 정확히 ~15nm 더 깎인 것을 확인, 전기적 지표도 물리적으로 타당한 방향(IdSat_norm↑, SSSat↓)으로 변함 (tasks.js #1, 나머지 2인 확인은 아직)
 - [ ] 예제가 SProcess 실공정 흐름인지 공정 에뮬레이션인지 확인
 - [x] **`doe.x_levels`(Ge%) / `doe.y_levels`(FR) 스윕 값 확정** (2026-08-06) — Ge% [30,40,50,60,70](50% 중심), FR [0,10,20,30,35](35nm=fin 전체 높이와 일치). `values_confirmed: true`. 25격자점(5×5) 본 스윕 시작 가능 → tasks.js #10~17
 - [ ] **STE 정규화 방법 — 잠정(provisional) 상태, 최종 채택 보류** (2026-08-06 수정) — G50_F0에서 체적평균(SlFin=-2262MPa) vs 계면 인접 근사(SlFin_pt=-3482MPa)를 실측 비교한 결과 53.9% 차이 + ShFin은 부호까지 반전됨. 무시할 수 없는 차이라 지금 하나로 확정하지 않고, **남은 24격자점 스윕에서 SlFin/SlFin_pt를 둘 다 뽑아 모은 뒤 마지막에 결정**하기로 함 (`stress_transfer_efficiency.normalization` 참고). ⚠ 스윕 담당자 전원이 `finfet_svisual_stress.tcl`의 2026-08-06 버전(SlFin_pt 등 포함)을 동일하게 써야 함 — 이 파일은 라이선스 문제로 git에 없으므로(`.gitignore` 참고) 팀 채널로 직접 파일을 공유해서 싱크 맞출 것
@@ -48,3 +48,4 @@
 | 2026-08-06 | Strain_Impact=1/0 SWB 비교로 응력-이동도 결합 검증 완료 (G50_F0). SVisual로 ChFin/SDepi 재질·도핑(BActive/BTotal)·Esd 언더컷 형상도 별도 확인 | Phase 0 baseline 신뢰성 확보 — 스윕 본격 시작 전에 물리 결합이 실제로 작동하는지 확인 필요했음 | — (PR 생략, 직접 반영) |
 | 2026-08-06 | `finfet_sprocess.scm`/`finfet_sdevice.cmd`를 TODO 골격에서 실제 원본 스크립트로 교체, `finfet_svisual_stress.tcl`/`finfet_svisual_extract.tcl` 신규 추가. `params.yaml`의 `doping`(Nsd=2.0e20 등), `stress_transfer_efficiency.normalization`(체적평균 방식 확인), `meta.verified_by` 채움 | 지금까지 실제 스크립트 내용이 채팅에서만 공유되고 repo엔 TODO 골격만 있어 팀원이 GitHub만 봐서는 실제 구현을 확인할 수 없었음 — 팀 가시성 확보 | — (PR 생략, 직접 반영) |
 | 2026-08-06 | 라이선스 문제로 스크립트 4개 `.gitignore` 처리. `doe.x_levels`/`y_levels` 확정(`values_confirmed: true`). STE 정규화는 G50_F0 실측 비교(체적평균 vs 계면 단일점, 53.9% 차이 + 부호 반전 1개 성분)로 provisional 상태로 정정 — 25격자점 스윕 데이터로 최종 결정 예정. `analysis/progress.json`의 담당자 키 오류 수정(#1/#3/#4/#16 누락된 주수빈 키 추가, #9/#10/#11/#12/#13/#17 tasks.js와 어긋난 키 수정) + #4(baseline 구조 재현) 유용성 체크 — 실제 G50_F0 실행 결과(verification CSV)가 있어 구조 스크립트가 end-to-end로 동작함이 확인됨 | 스윕 시작 전 마지막 P0 정리 — 스윕 값 확정으로 #10~17 착수 가능해졌고, 대시보드 데이터 정합성도 바로잡음 | — (PR 생략, 직접 반영) |
+| 2026-08-07 | **FR>0 실제 Sentaurus 실행 검증 완료(G50_F15, 유용성)** — SVisual에서 baseline(FR=0)과 FR=15nm 구조를 좌표축 있는 단면(cutline)으로 나란히 비교, TRECH 영역 세로 치수가 baseline 대비 약 0.015(15nm)만큼 더 깎인 것을 좌표로 확인. 전기적 지표도 예상 방향대로 변화(IdSat_norm +12.9%, IdLin_norm +11.3%, SSSat -32.9%, \|VtiSat\| -4.2%). `analysis/progress.json` #1 유용성 체크 | tasks.js #1의 마지막 미검증 항목(FR>0 실행)이 해소됨 — 나머지 2인 확인만 남음 | — (PR 생략, 직접 반영) |

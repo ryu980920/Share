@@ -142,7 +142,7 @@ G{Ge조성%}_F{FR_nm}
 
 ## ⚠ 확정 필요 항목 (팀 논의 우선순위)
 
-1. ~~FR(리세스 깊이) 변수를 SDE 스크립트에 추가하는 정확한 문법~~ — **2026-08-06 구현 완료** (`baseline/finfet_sprocess.scm`에 조건부 리세스 식각 로직 추가). FR=0 회귀 테스트 통과, FR>0은 아직 실제 Sentaurus 실행 미검증(tasks.js #1).
+1. ~~FR(리세스 깊이) 변수를 SDE 스크립트에 추가하는 정확한 문법~~ — **2026-08-06 구현 완료** (`baseline/finfet_sprocess.scm`에 조건부 리세스 식각 로직 추가), **2026-08-07 FR>0 실행 검증도 완료**(G50_F15, 유용성 — SVisual 좌표 단면 비교로 TRECH 깎인 깊이가 요청값 15nm와 일치함을 확인). tasks.js #1, 나머지 2인 확인만 남음.
 2. **STE 정규화 방법 — provisional** — 체적평균(현재 구현) vs 계면 인접 단일점, G50_F0 실측 비교로 53.9% 차이 확인됨. 25격자점 스윕 데이터로 최종 결정 예정(`baseline/params.yaml` `stress_transfer_efficiency.normalization` 참고).
 3. ~~Ge%×FR 스윕 격자 값~~ — **2026-08-06 확정**: Ge% [30,40,50,60,70](50% 중심), FR [0,10,20,30,35](35nm = fin 전체 높이와 일치). `baseline/params.yaml` `doe.values_confirmed: true`.
 4. **"Stress Transfer Efficiency" 용어의 선행 사용(Choi 2012) 문제를 발표자료에서 어떻게 언급할지** — 팀은 검증하지 않기로 했지만, Q&A 대응 문장은 미리 준비가 필요할 수 있다.
@@ -218,7 +218,7 @@ GitHub API 로 직접 `analysis/progress.json`·`runs/attachments/` 에 커밋�
 
 | Phase | 기간 | 내용 |
 |---|---|---|
-| P0 | W1 · 8/03–8/09 | 전원 공통 — FR 변수(구현 완료, 실행 검증 중), 스윕 값(확정됨), STE 정규화(provisional), baseline 재현·3인 값 대조(진행 중) |
+| P0 | W1 · 8/03–8/09 | 전원 공통 — FR 변수(구현·실행 검증 완료, 유용성), 스윕 값(확정됨), STE 정규화(provisional), baseline 재현·3인 값 대조(진행 중) |
 | P1 | W2 · 8/10–8/16 | 1차원 단독 스윕 · 체크포인트 |
 | P2 | W3 · 8/17–8/23 | 2차원 DoE 실행 |
 | P3 | W4 · 8/24–8/31 | 병합 · STE 지도 · 발표 |
