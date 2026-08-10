@@ -131,11 +131,17 @@ def read_swb(path, cfg):
         except Exception:
             return np.nan          # 'x', 'xx', '' = 아직 안 돌아간 셀
 
+    # ★ 2026-08-10: SWB 원본 export 의 실제 단위 보정.
+    #   Ge 컬럼은 몰분율(0~1) → Ge_percent 는 %(0~100) 이어야 하므로 ×100.
+    #   FR 컬럼은 um 단위(예: 0.01) → FR_nm 은 nm 단위(예: 10) 여야 하므로 ×1000.
+    #   (이 프로젝트의 SWB export 단위가 고정이라는 전제 — x_param/y_param 을
+    #    다른 이름/단위로 바꾸면 이 변환도 같이 검토할 것)
     out, pending = [], 0
     for r in data:
-        g, fr = num(r[ix]), num(r[iy])
-        if not (np.isfinite(g) and np.isfinite(fr)):
+        g_raw, fr_raw = num(r[ix]), num(r[iy])
+        if not (np.isfinite(g_raw) and np.isfinite(fr_raw)):
             continue
+        g, fr = g_raw * 100.0, fr_raw * 1000.0
         rec = {"Ge_percent": g, "FR_nm": fr, "run_id": make_run_id(g, fr)}
         empty = True
         for our, swb_name in mapping.items():
@@ -147,6 +153,12 @@ def read_swb(path, cfg):
         if empty:
             pending += 1
         rec["_pending"] = empty
+        # ★ stress_GPa (필수 헤드라인 지표) — STE 정규화 방법 최종 확정 전까지는
+        #   체적평균(SlFin_MPa) 기준으로 잠정 계산한다. SlFin_pt_MPa 은 원본 그대로
+        #   같이 보존해서, 25격자점 다 모인 뒤 두 방식을 비교해 최종 결정한다.
+        #   (baseline/README.md 2026-08-06/08-10 항목 참고)
+        if np.isfinite(rec.get("SlFin_MPa", np.nan)):
+            rec["stress_GPa"] = rec["SlFin_MPa"] / 1000.0
         out.append(rec)
     return out, pending
 
