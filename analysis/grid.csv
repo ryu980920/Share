@@ -1,1 +1,10 @@
-run_id,Ge_percent,FR_nm,owner
+Ge_percent,FR_nm,run_id,SlFin_MPa,SlFin_pt_MPa,VtiSat,IdSat_norm,SSSat,Ioff_norm,_pending,stress_GPa,owner,source,warn,has_photo,n_photos,has_notes,notes_preview
+30.0,0.0,G30_F0,-1346.0,-2115.0,-0.422,0.000472,105.125,1.07e-10,False,-1.346,주수빈,주수빈_Ge스윕.csv,,False,0,False,
+40.0,0.0,G40_F0,-1801.0,-2787.0,-0.414,0.000514,120.668,1.3e-10,False,-1.801,주수빈,주수빈_Ge스윕.csv,,False,0,False,
+50.0,0.0,G50_F0,-2262.0,-3482.0,-0.403,0.000557,183.484,2.41e-10,False,-2.262,유용성,유용성_G중간열.csv,,True,3,True,"## 무엇을 바꿨나
+- 새로 바꾼 건 없음 — baseline(G50_F0, Ge=0.50/FR=0) 신뢰성 검증 단계. SVisual(`n1_e_fps`)로 구조를 직접 열어서 재질/도핑/형상을 눈으로 확인
+- `01_전체구조_overview.png` — 구조 전체를 처음 열어본 컷.…"
+50.0,10.0,G50_F10,-2449.0,-3511.0,-0.392,0.00061,136.106,3.39e-10,False,-2.449,유용성,유용성_G중간열.csv,,False,0,False,
+50.0,20.0,G50_F20,-2521.0,-3484.0,-0.38,0.000641,125.189,9.68e-10,False,-2.521,유용성,유용성_G중간열.csv,,False,0,False,
+50.0,30.0,G50_F30,-2532.0,-3407.0,-0.365,0.000647,227.861,2.41e-08,False,-2.532,유용성,유용성_G중간열.csv,,False,0,False,
+50.0,35.0,G50_F35,-2525.0,-3365.0,-0.355,0.00065,311.045,1.05e-07,False,-2.525,유용성,유용성_G중간열.csv,,False,0,False,

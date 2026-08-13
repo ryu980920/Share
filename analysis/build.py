@@ -93,18 +93,44 @@ def scan_attachments(run_id, acfg):
 #
 #  구조: 1행=툴이름, 2행=노드이름, 3행=파라미터/변수 이름, 4행~=실험조건
 # ----------------------------------------------------------------------
+_NODE_TAG_RE = re.compile(r"^\[n\d+\]:\s*(.*)$")
+
+
+def _strip_node_tag(v):
+    """'[n12]: 0.4' -> '0.4'. 노드 태그가 없으면 그대로 반환."""
+    v = (v or "").strip()
+    m = _NODE_TAG_RE.match(v)
+    return m.group(1).strip() if m else v
+
+
 def looks_like_swb(path):
+    # ★ 2026-08-13: 팀원마다 SWB "Export Variables" 옵션이 달라 export 형식이 갈린다.
+    #   (a) 기존: 1행=도구명(sprocess/sdevice 반복), 2행=노드명, 3행=파라미터명, 4행~=데이터
+    #   (b) 신규(축약형): 1행=파라미터명만, 2행~=데이터. 셀 값 앞에 '[n12]: ' 같은
+    #       노드 태그가 붙기도 함 — 이 태그가 2번째 줄(첫 데이터 행)에 있으면 SWB 로 판정.
     with open(path, encoding="utf-8-sig") as f:
-        first = f.readline()
-    return "run_id" not in first and ("sprocess" in first or "sdevice" in first or "sde" in first)
+        lines = [f.readline() for _ in range(3)]
+    first, second = lines[0], (lines[1] if len(lines) > 1 else "")
+    if "run_id" in first:
+        return False
+    if "sprocess" in first or "sdevice" in first or "sde" in first:
+        return True
+    return bool(re.search(r"\[n\d+\]:", second))   # ^ 앵커 없는 버전 — 셀 어디에 있어도 검출
 
 
 def read_swb(path, cfg):
     import csv as _csv
     rows = list(_csv.reader(open(path, encoding="utf-8-sig")))
-    if len(rows) < 4:
-        raise ValueError("SWB 변수표 형식인데 실험 행이 없다 (4행 이상 필요)")
-    names, data = rows[2], rows[3:]
+    if len(rows) < 2:
+        raise ValueError("SWB 변수표 형식인데 실험 행이 없다 (최소 2행 필요)")
+
+    # ★ 2026-08-13: 헤더가 3행(도구명/노드명/파라미터명)인지 1행(파라미터명만)인지
+    #   자동 판별 — 2번째 행에 도구명이 또 나오면 기존 3행 헤더로 본다.
+    if len(rows) > 2 and any(tok in rows[1] for tok in ("sprocess", "sdevice", "svisual", "sde")):
+        names, data = rows[2], rows[3:]
+    else:
+        names, data = rows[0], rows[1:]
+    names = [n.strip() for n in names]
 
     sw = cfg.get("swb", {})
     xp, yp = sw.get("x_param", "GeMoleFraction"), sw.get("y_param", "FR_nm")
@@ -125,11 +151,12 @@ def read_swb(path, cfg):
             f"      analysis/config.yaml 의 swb.x_param / y_param 을 실제 이름으로 고칠 것.")
 
     def num(v):
+        v = _strip_node_tag(v)         # '[n12]: 0.4' -> '0.4' (노드 태그 붙는 export 대응)
         try:
             f = float(v)
             return f if np.isfinite(f) else np.nan
         except Exception:
-            return np.nan          # 'x', 'xx', '' = 아직 안 돌아간 셀
+            return np.nan          # 'x', 'xx', '' = 아직 안 돌아간 셀 (혹은 반복생략, 아래서 구분)
 
     # ★ 2026-08-10: SWB 원본 export 의 실제 단위 보정.
     #   Ge 컬럼은 몰분율(0~1) → Ge_percent 는 %(0~100) 이어야 하므로 ×100.
@@ -137,8 +164,26 @@ def read_swb(path, cfg):
     #   (이 프로젝트의 SWB export 단위가 고정이라는 전제 — x_param/y_param 을
     #    다른 이름/단위로 바꾸면 이 변환도 같이 검토할 것)
     out, pending = [], 0
+    last_g, last_fr = np.nan, np.nan   # ★ 2026-08-13: 일부 export 는 앞 행과 값이 같으면 셀을 비워둔다
     for r in data:
-        g_raw, fr_raw = num(r[ix]), num(r[iy])
+        if not any(c.strip() for c in r):
+            continue                    # 완전히 빈 줄(파일 끝 트레일러 등) 건너뜀
+        g_cell = _strip_node_tag(r[ix]) if ix < len(r) else ""
+        fr_cell = _strip_node_tag(r[iy]) if iy < len(r) else ""
+        # 빈 칸("")은 "윗 행과 동일해서 생략"으로 보고 이전 값을 이어받는다.
+        # 'x'/'xx'(진짜 미실행)는 여기 해당 안 됨 — num()이 nan을 주되 last_* 는 안 바뀜.
+        if g_cell == "":
+            g_raw = last_g
+        else:
+            g_raw = num(r[ix])
+            if np.isfinite(g_raw):
+                last_g = g_raw
+        if fr_cell == "":
+            fr_raw = last_fr
+        else:
+            fr_raw = num(r[iy])
+            if np.isfinite(fr_raw):
+                last_fr = fr_raw
         if not (np.isfinite(g_raw) and np.isfinite(fr_raw)):
             continue
         g, fr = g_raw * 100.0, fr_raw * 1000.0
