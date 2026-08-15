@@ -275,7 +275,81 @@ def main():
                   "★ = 가장 좋은 지점." + SMOOTH_NOTE,
              best="min")
 
+    # --- STE 정규화 방법 비교: 체적평균 vs 계면 단일점 -------------------
+    #  두 방식이 결론까지 뒤집는다는 걸 그림으로 보이는 짝 그림.
+    #  "정규화 방법을 어떻게 정했나"에 대한 답이 이 두 장이다.
+    draw_map(df, "STE_pt",
+             "[대조군] 계면 단일점 기준 STE — Ge% × FR",
+             "STE_pt [-]  (색이 진할수록 높음)",
+             "pres_STE_pt_map.png", cmap="YlGnBu", fmt="%.3f",
+             note="분자를 SlFin_pt(게이트 상단 계면 2nm×2nm×1nm 슬래브)로 바꾼 것. 채택본(체적평균)과 비교하면 "
+                  "FR 축 거동이 정반대 — 여기서는 FR 이 커질수록 STE 가 오히려 낮아진다." + SMOOTH_NOTE,
+             best="max")
+    draw_norm_compare(df)
+
     draw_overlay(df)
+
+
+def draw_norm_compare(df):
+    """체적평균 vs 계면점 — FR 축 거동과 이동도 예측력을 한 장에 비교."""
+    ge_list = sorted(df["Ge_percent"].unique())
+    fig, axes = plt.subplots(1, 3, figsize=(15.0, 4.9))
+
+    # (1) FR 축 거동 — 두 방식이 반대로 움직인다
+    for ax, col, ttl in ((axes[0], "STE_vol", "채택: 체적평균 SlFin 기준"),
+                         (axes[1], "STE_pt", "대조: 계면 단일점 SlFin_pt 기준")):
+        for ge in ge_list:
+            s = df[df.Ge_percent == ge].sort_values("FR_nm")
+            ax.plot(s["FR_nm"], s[col], "o-", lw=1.8, ms=6, label=f"Ge {ge:.0f}%")
+        ax.set_xlabel("FR — 리세스 깊이 [nm]", fontsize=11)
+        ax.set_ylabel("STE [-]", fontsize=11)
+        ax.set_title(ttl, fontsize=12)
+        ax.grid(alpha=0.3)
+        ax.legend(fontsize=8.5)
+        # 피크 위치 표시
+        for ge in ge_list:
+            s = df[df.Ge_percent == ge].sort_values("FR_nm")
+            i = s[col].values.argmax()
+            ax.axvline(s["FR_nm"].values[i], color="gray", ls=":", lw=0.8, alpha=0.5)
+
+    # (2) 이동도(gmSat) 예측력 — 판정 근거
+    r_vol, r_pt = [], []
+    for ge in ge_list:
+        s = df[df.Ge_percent == ge]
+        r_vol.append(np.corrcoef(s["SlFin_MPa"].abs(), s["gmSat"])[0, 1])
+        r_pt.append(np.corrcoef(s["SlFin_pt_MPa"].abs(), s["gmSat"])[0, 1])
+    ax = axes[2]
+    x = np.arange(len(ge_list))
+    ax.bar(x - 0.19, r_vol, 0.38, label="체적평균 SlFin", color="#2c7fb8")
+    ax.bar(x + 0.19, r_pt, 0.38, label="계면점 SlFin_pt", color="#d95f0e")
+    ax.axhline(0, color="black", lw=1)
+    ax.set_xticks(x)
+    ax.set_xticklabels([f"Ge {g:.0f}%" for g in ge_list], fontsize=9)
+    ax.set_ylabel("응력 vs gmSat 상관계수  (FR 축 내)", fontsize=10.5)
+    ax.set_title("판정 근거 — 이동도를 잘 예측하는 쪽", fontsize=12)
+    ax.set_ylim(-0.6, 1.15)
+    ax.grid(axis="y", alpha=0.3)
+    ax.legend(fontsize=9, loc="lower right")
+    for xi, v in zip(x - 0.19, r_vol):
+        ax.annotate(f"{v:+.2f}", (xi, v), ha="center", va="bottom", fontsize=8.5)
+    for xi, v in zip(x + 0.19, r_pt):
+        ax.annotate(f"{v:+.2f}", (xi, v), ha="center", va="top", fontsize=8.5)
+
+    fig.suptitle("STE 정규화 방법 비교 — 왜 체적평균을 채택했는가", fontsize=14)
+    fig.text(0.012, 0.055,
+             "왼쪽/가운데: 같은 데이터인데 FR 축 거동이 정반대다 — 체적평균은 FR=30nm 에서 피크, 계면점은 FR=10nm 에서 피크 후 계속 하락(점선 = 피크 위치).",
+             fontsize=9, color="#444")
+    fig.text(0.012, 0.028,
+             "오른쪽: 이동도(gmSat)와의 상관 — 계면점은 5개 Ge% 전부에서 음의 상관이라, '응력이 세지는데 이동도는 약해진다'는 물리적으로 성립하지 않는 결과가 된다.",
+             fontsize=9, color="#444")
+    fig.text(0.012, 0.001,
+             "단, 계면점 방식이 개념적으로 틀린 건 아니다 — 현재 창이 tri-gate 의 상단 계면만 잡고 있어 전류가 흐르는 측벽을 놓친 게 원인일 수 있다(측벽 포함 재추출은 향후과제).",
+             fontsize=9, color="#444")
+    fig.tight_layout(rect=(0, 0.10, 1, 0.95))
+    out = FIGDIR / "pres_STE_normalization_compare.png"
+    fig.savefig(out, dpi=160)
+    plt.close(fig)
+    print(f"저장: {out.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
