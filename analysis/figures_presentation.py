@@ -285,9 +285,82 @@ def main():
              note="분자를 SlFin_pt(게이트 상단 계면 2nm×2nm×1nm 슬래브)로 바꾼 것. 채택본(체적평균)과 비교하면 "
                   "FR 축 거동이 정반대 — 여기서는 FR 이 커질수록 STE 가 오히려 낮아진다." + SMOOTH_NOTE,
              best="max")
+    draw_norm_maps_shared(df)
     draw_norm_compare(df)
 
     draw_overlay(df)
+
+
+def draw_norm_maps_shared(df):
+    """
+    체적평균 vs 계면점 STE 를 **같은 색 스케일**로 나란히 그린다.
+
+    ⚠ 왜 필요한가: 두 방식은 절대값 범위가 달라서(체적평균 0.59~0.68,
+      계면점 0.89~0.94) 각자 자기 범위로 색을 칠하면 두 그림의 색을 직접
+      비교할 수 없다. 여기서는 **각 방식의 최댓값 대비 %** 로 환산한 뒤
+      하나의 컬러바를 공유해, 색 비교와 방향 비교를 동시에 가능하게 한다.
+      부수적으로 "체적평균이 계면점보다 격자 안에서 더 크게 변한다"
+      (동적 범위 12.4%p vs 5.6%p)는 것도 색의 폭으로 드러난다.
+    """
+    specs = [("STE_vol", "채택: 체적평균 SlFin 기준"),
+             ("STE_pt", "대조: 계면 단일점 SlFin_pt 기준")]
+    grids = []
+    for col, ttl in specs:
+        X, Y, Z = pivot(df, col)
+        grids.append((X, Y, Z / np.nanmax(Z) * 100.0, ttl))
+
+    vmin = min(np.nanmin(g[2]) for g in grids) - 0.5
+    levels = np.linspace(vmin, 100.0, 22)
+
+    fig, axes = plt.subplots(1, 2, figsize=(13.6, 5.9), sharey=True)
+    for ax, (X, Y, Z, ttl) in zip(axes, grids):
+        Xp, Yp, Zp = smooth_grid(X, Y, Z)
+        cf = ax.contourf(Xp, Yp, Zp, levels=levels, cmap="YlGnBu", extend="min")
+        cs = ax.contour(Xp, Yp, Zp, levels=levels[::3], colors="white",
+                        linewidths=0.9, alpha=0.8)
+        ax.clabel(cs, inline=True, fontsize=8.5, fmt="%.0f%%")
+        for j, yy in enumerate(Y):
+            for i, xx in enumerate(X):
+                ax.plot(xx, yy, "o", ms=4, mfc="white", mec="black", mew=0.9, zorder=5)
+                ax.annotate(f"{Z[j, i]:.1f}", (xx, yy), textcoords="offset points",
+                            xytext=(0, 7), ha="center", fontsize=7, color="white", zorder=6,
+                            path_effects=[matplotlib.patheffects.withStroke(
+                                linewidth=2, foreground="black")])
+        # 각 방식의 피크가 있는 FR 행을 표시
+        peak_fr = Y[np.unravel_index(np.nanargmax(Z), Z.shape)[0]]
+        ax.axhline(peak_fr, color="crimson", lw=2.0, ls="--", zorder=7)
+        ax.annotate(f"← 최댓값 행  FR={peak_fr:.0f}nm", xy=(X.max(), peak_fr),
+                    xytext=(-6, 7), textcoords="offset points", ha="right",
+                    fontsize=10, color="crimson", weight="bold", zorder=8,
+                    path_effects=[matplotlib.patheffects.withStroke(
+                        linewidth=2.5, foreground="white")])
+        ax.set_xlabel("Ge 조성 [%]", fontsize=11.5)
+        ax.set_title(ttl, fontsize=12.5)
+        ax.set_xticks(X); ax.set_yticks(Y)
+        ax.set_xlim(X.min() - 1.6, X.max() + 1.6)
+        ax.set_ylim(Y.min() - 1.2, Y.max() + 1.2)
+    axes[0].set_ylabel("FR — 리세스 깊이 [nm]", fontsize=11.5)
+
+    fig.subplots_adjust(left=0.065, right=0.875, top=0.885, bottom=0.235, wspace=0.10)
+    cax = fig.add_axes([0.895, 0.235, 0.018, 0.65])
+    cb = fig.colorbar(cf, cax=cax)
+    cb.set_label("각 방식의 최댓값 대비 [%]  (색이 진할수록 높음)", fontsize=10)
+
+    fig.suptitle("STE 정규화 방법 — 같은 색 스케일로 직접 비교", fontsize=14.5, y=0.965)
+    fig.text(0.012, 0.085,
+             "두 방식은 절대값 범위가 달라(체적평균 0.59~0.68 / 계면점 0.89~0.94) 각자 스케일로 그리면 색 비교가 불가능하다. "
+             "여기서는 각 방식의 최댓값 대비 %로 환산해 컬러바를 공유했다.",
+             fontsize=9, color="#444")
+    fig.text(0.012, 0.048,
+             "왼쪽은 위로 갈수록 계속 진해지고(최댓값 행 FR=30nm), 오른쪽은 FR=10nm 에서 가장 진했다가 위로 갈수록 옅어진다 — FR 축 거동이 정반대.",
+             fontsize=9, color="#444")
+    fig.text(0.012, 0.013,
+             "색이 변하는 폭도 체적평균 쪽이 더 넓다(격자 안 동적 범위 12.4%p vs 5.6%p) — 계면점 지도가 전반적으로 고르게 진해 보이는 이유다.",
+             fontsize=9, color="#444")
+    out = FIGDIR / "pres_STE_norm_maps_shared.png"
+    fig.savefig(out, dpi=160)
+    plt.close(fig)
+    print(f"저장: {out.relative_to(ROOT)}")
 
 
 def draw_norm_compare(df):
