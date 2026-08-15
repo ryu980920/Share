@@ -174,7 +174,7 @@ def draw_map(df, col, title, cbar_label, fname, cmap="YlGnBu",
 
 def draw_overlay(df):
     X, Y, Z_ste = pivot(df, "STE_vol")
-    _, _, Z_ss = pivot(df, "SSSat")
+    _, _, Z_ss = pivot(df, "SSlin")
     Xp, Yp, Zp_ste = smooth_grid(X, Y, Z_ste)
     _, _, Zp_ss = smooth_grid(X, Y, Z_ss)
 
@@ -183,7 +183,7 @@ def draw_overlay(df):
     cb = fig.colorbar(cf, ax=ax)
     cb.set_label("STE — 응력 전달 효율 [-]  (색이 진할수록 높음 = 좋음)", fontsize=10.5)
 
-    cs = ax.contour(Xp, Yp, Zp_ss, levels=[110, 130, 160, 200, 250, 300],
+    cs = ax.contour(Xp, Yp, Zp_ss, levels=[80, 85, 90, 100, 110, 120],
                     colors="crimson", linewidths=1.8, linestyles="--")
     ax.clabel(cs, inline=True, fontsize=9.5, fmt="SS %.0f")
 
@@ -203,7 +203,7 @@ def draw_overlay(df):
 
     ax.set_xlabel("Ge 조성 [%]", fontsize=12)
     ax.set_ylabel("FR — 리세스 깊이 [nm]", fontsize=12)
-    ax.set_title("STE(색) vs 정전제어 열화 SSSat(붉은 점선) — 트레이드오프",
+    ax.set_title("STE(색) vs 게이트 제어 열화 SSlin(붉은 점선) — 트레이드오프",
                  fontsize=14, pad=14)
     ax.set_xticks(X)
     ax.set_yticks(Y)
@@ -211,8 +211,8 @@ def draw_overlay(df):
     ax.set_ylim(Y.min() - 1.0, Y.max() + 1.0)
 
     fig.text(0.01, 0.015,
-             "붉은 점선(SSSat, mV/dec)은 낮을수록 좋다. FR 30nm 이상에서 SS 등고선이 급격히 촘촘해진다 "
-             "— STE 이득은 이미 포화했는데 정전제어만 나빠지는 구간.",
+             "붉은 점선(SSlin, mV/dec)은 낮을수록 좋다. FR 20nm 까지는 77~87 로 완만하지만 그 위로 100~124 까지 급격히 나빠진다 "
+             "— STE 이득은 이미 포화했는데 게이트 제어만 잃는 구간.",
              fontsize=8.5, color="#444")
     fig.tight_layout(rect=(0, 0.06, 1, 1))
     out = FIGDIR / "pres_tradeoff_overlay.png"
@@ -243,12 +243,36 @@ def main():
                   "★ = 응력이 가장 강한 지점(G70_F30)." + SMOOTH_NOTE,
              best="max")
 
-    draw_map(df, "SSSat",
-             "포화 Subthreshold Swing (SSSat) — Ge% × FR",
-             "SSSat [mV/dec]  (색이 진할수록 높음 = 정전제어 나쁨)",
-             "pres_SSSat_map.png", cmap="Reds", fmt="%.0f",
-             note="이상적 하한은 60 mV/dec. ★ = 가장 좋은(가장 낮은) 지점. "
-                  "FR 30nm 이상에서 전 Ge% 구간에 걸쳐 급격히 악화된다." + SMOOTH_NOTE,
+    # ★ 게이트 제어 품질의 지표는 SSlin — 이상적 60mV/dec 한계와 비교 가능한 쪽
+    draw_map(df, "SSlin",
+             "Subthreshold Swing SSlin (저 Vd) — Ge% × FR",
+             "SSlin [mV/dec]  (색이 진할수록 높음 = 게이트 제어 나쁨)",
+             "pres_SSlin_map.png", cmap="Reds", fmt="%.0f",
+             note="게이트 제어 품질의 지표. 이상적 하한 60 mV/dec 와 비교 가능한 건 이 값이다"
+                  "(SS 이상식은 드레인이 장벽에 영향을 안 준다는 가정에서 유도되므로). "
+                  "★ = 가장 좋은 지점." + SMOOTH_NOTE,
+             best="min")
+
+    # 누설은 SS 에 섞지 말고 따로 — 고 Ge% 에서 SiGe 밴드갭 축소로 접합 누설이 커진다
+    df = df.copy()
+    df["log10_Ioff"] = np.log10(df["Ioff_norm"].astype(float))
+    draw_map(df, "log10_Ioff",
+             "누설전류 Ioff (log10) — Ge% × FR",
+             "log10(Ioff_norm)  (색이 진할수록 누설 큼)",
+             "pres_Ioff_map.png", cmap="Purples", fmt="%.1f",
+             note="SSSat 대신 누설을 따로 본 지도. 고 Ge% 에서 SiGe 밴드갭 축소로 드레인 접합 누설이 커지고, "
+                  "FR 30nm 이상에서는 채널 스토퍼(SiStop) 제거로 관통 누설이 더해져 자릿수 단위로 뛴다. "
+                  "★ = 누설이 가장 적은 지점." + SMOOTH_NOTE,
+             best="min")
+
+    # 숏채널 효과는 SSSat 이 아니라 DIBL 로 정량화한다
+    draw_map(df, "DIBL_mV_V",
+             "DIBL (드레인 유도 장벽 저하) — Ge% × FR",
+             "DIBL [mV/V]  (색이 진할수록 숏채널 효과 심함)",
+             "pres_DIBL_map.png", cmap="Oranges", fmt="%.0f",
+             note="DIBL = (|VtiLin|-|VtiSat|)/ΔVd, ΔVd=0.75V 가정. FR 이 깊어질수록 5개 Ge% 전부에서 "
+                  "단조 증가 — 리세스가 채널 스토퍼를 제거해 숏채널 효과가 커진다는 직접 증거. "
+                  "★ = 가장 좋은 지점." + SMOOTH_NOTE,
              best="min")
 
     draw_overlay(df)

@@ -45,6 +45,9 @@ OUT_JSON = ROOT / "analysis" / "status.json"
 REQUIRED = ["run_id", "stress_GPa"]   # ste 는 아직 정규화 미확정이라 필수 아님 — 있으면 통과시킴
 XCHECK_TOL = 0.05          # 교차검증 허용 편차 (주 지표 stress_GPa 기준)
 XCHECK_METRIC = "stress_GPa"
+DVD_FOR_DIBL = 0.75        # DIBL 계산용 ΔVd [V] = Vdd(0.8) - Vlin(0.05 가정)
+                           # ⚠ Vlin 실제값은 finfet_sdevice.cmd 에서 확인 필요 —
+                           #   상수라 경향/대소 비교에는 영향 없고 절대값만 비례해서 바뀐다
 
 MU_COLUMNS = ["run_id", "Ge_percent", "FR_nm", "owner"]  # mu 가 항상 최소로 가져야 하는 컬럼
 
@@ -204,6 +207,13 @@ def read_swb(path, cfg):
         #   (baseline/README.md 2026-08-06/08-10 항목 참고)
         if np.isfinite(rec.get("SlFin_MPa", np.nan)):
             rec["stress_GPa"] = rec["SlFin_MPa"] / 1000.0
+        # ★ 2026-08-15: DIBL = (|VtiLin| - |VtiSat|) / ΔVd  [mV/V]
+        #   숏채널 효과(드레인이 채널 장벽을 낮추는 정도)의 표준 지표.
+        #   SSSat 이 누설에 오염돼 있어 정전제어 열화를 SSSat 으로 논하면 안 되고,
+        #   DIBL 로 따로 정량화해야 한다. ΔVd 는 Vdd - Vlin 근사.
+        vl, vs = rec.get("VtiLin", np.nan), rec.get("VtiSat", np.nan)
+        if np.isfinite(vl) and np.isfinite(vs):
+            rec["DIBL_mV_V"] = (abs(vl) - abs(vs)) / DVD_FOR_DIBL * 1000.0
         out.append(rec)
     return out, pending
 
