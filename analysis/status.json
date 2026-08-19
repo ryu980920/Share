@@ -1,5 +1,5 @@
 {
- "generated": "2026-08-17 09:21",
+ "generated": "2026-08-19 11:05",
  "x_levels": [
   30.0,
   40.0,
@@ -29,9 +29,9 @@
    "Vth_V": null,
    "Ion_A_um": null,
    "has_photo": 1.0,
-   "n_photos": 1.0,
-   "has_notes": 0.0,
-   "notes_preview": ""
+   "n_photos": 2.0,
+   "has_notes": 1.0,
+   "notes_preview": "## 무엇을 바꿨나\n- Ge=0.30 / FR=0 조건. `stress_ZZ_field.png` 신규 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나이며, 전부 동일한 컬러 스케일(0 ~ -3.6e9 Pa, 눈금 …"
   },
   {
    "run_id": "G30_F10",
@@ -104,9 +104,9 @@
    "Vth_V": null,
    "Ion_A_um": null,
    "has_photo": 1.0,
-   "n_photos": 1.0,
-   "has_notes": 0.0,
-   "notes_preview": ""
+   "n_photos": 2.0,
+   "has_notes": 1.0,
+   "notes_preview": "## 무엇을 바꿨나\n- Ge=0.40 / FR=0 조건. `stress_ZZ_field.png` 신규 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나이며, 전부 동일한 컬러 스케일(0 ~ -3.6e9 Pa, 눈금 …"
   },
   {
    "run_id": "G40_F10",
@@ -179,9 +179,9 @@
    "Vth_V": null,
    "Ion_A_um": null,
    "has_photo": 1.0,
-   "n_photos": 4.0,
+   "n_photos": 5.0,
    "has_notes": 1.0,
-   "notes_preview": "## 무엇을 바꿨나\n- 새로 바꾼 건 없음 — baseline(G50_F0, Ge=0.50/FR=0) 신뢰성 검증 단계. SVisual(`n1_e_fps`)로 구조를 직접 열어서 재질/도핑/형상을 눈으로 확인\n- `01_전체구조_overview.png` — 구조 전체를 처음 열어본 컷.…"
+   "notes_preview": "## 무엇을 바꿨나\n- 2026-08-19: `stress_ZZ_field.png` 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나, 전부 동일 컬러 스케일(0 ~ -3.6e9 Pa) 사용. 이 점의 stress_…"
   },
   {
    "run_id": "G50_F10",
@@ -254,9 +254,9 @@
    "Vth_V": null,
    "Ion_A_um": null,
    "has_photo": 1.0,
-   "n_photos": 1.0,
-   "has_notes": 0.0,
-   "notes_preview": ""
+   "n_photos": 2.0,
+   "has_notes": 1.0,
+   "notes_preview": "## 무엇을 바꿨나\n- Ge=0.60 / FR=0 조건. `stress_ZZ_field.png` 신규 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나이며, 전부 동일한 컬러 스케일(0 ~ -3.6e9 Pa, 눈금 …"
   },
   {
    "run_id": "G60_F10",
@@ -329,9 +329,9 @@
    "Vth_V": null,
    "Ion_A_um": null,
    "has_photo": 1.0,
-   "n_photos": 1.0,
-   "has_notes": 0.0,
-   "notes_preview": ""
+   "n_photos": 2.0,
+   "has_notes": 1.0,
+   "notes_preview": "## 무엇을 바꿨나\n- Ge=0.70 / FR=0 조건. `stress_ZZ_field.png` 신규 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나이며, 전부 동일한 컬러 스케일(0 ~ -3.6e9 Pa, 눈금 …"
   },
   {
    "run_id": "G70_F10",
