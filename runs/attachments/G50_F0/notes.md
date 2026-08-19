@@ -1,4 +1,5 @@
 ## 무엇을 바꿨나
+- 2026-08-19: `stress_ZZ_field.png` 추가 — SVisual StressZZ 단면 캡처. Ge% 비교용 5장 세트(G30/40/50/60/70_F0) 중 하나, 전부 동일 컬러 스케일(0 ~ -3.6e9 Pa) 사용. 이 점의 stress_GPa = -2.262 GPa (grid.csv 기준). 컬러바 단위가 Pa로 표시되는 건 알려진 사항 — 발표 때 구두 설명 예정
 - 새로 바꾼 건 없음 — baseline(G50_F0, Ge=0.50/FR=0) 신뢰성 검증 단계. SVisual(`n1_e_fps`)로 구조를 직접 열어서 재질/도핑/형상을 눈으로 확인
 - `01_전체구조_overview.png` — 구조 전체를 처음 열어본 컷. 축(X=높이, Y=핀 폭, Z=채널 길이) 확인용
 - `02_SiGe_SD_형상_단독.png` — SiGe(S/D 에피)만 Materials 탭에서 단독으로 켠 형상. {111} facet 다이아몬드 모양 확인
