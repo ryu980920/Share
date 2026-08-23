@@ -192,11 +192,15 @@ def draw_overlay(df):
             ax.plot(xx, yy, "o", ms=4.5, mfc="white", mec="black", mew=0.9, zorder=5)
 
     # 실용 최적 띠 — STE 는 이미 포화(≈0.667)했는데 SS 는 아직 최저 구간
+    # ★ 2026-08-23: FR=15/22nm 실측 추가 후 상한을 22 → 20nm 로 정정.
+    #   근거: nm당 STE 이득 ÷ nm당 SSlin 손실 비율이 FR15→20 구간 2.91 에서
+    #   FR20→22 구간 0.38 로 7.6배 급락(= 이득/대가 역전). gmSat 도 FR=20 에서
+    #   최댓값(1.149e-4) 후 22nm 에서 감소. Ioff 도 22nm 에서 1e-9 를 넘어선다.
     ax.axhline(15, color="white", lw=2.2, ls="-", alpha=0.85, zorder=4)
-    ax.axhline(22, color="white", lw=2.2, ls="-", alpha=0.85, zorder=4)
-    ax.axhspan(15, 22, color="white", alpha=0.22, zorder=1)
-    ax.annotate("실용 최적 구간  FR ≈ 15~22nm\nSTE 거의 최대 + SS 아직 최저",
-                xy=(50, 18.5), fontsize=11, ha="center", va="center",
+    ax.axhline(20, color="white", lw=2.2, ls="-", alpha=0.85, zorder=4)
+    ax.axhspan(15, 20, color="white", alpha=0.22, zorder=1)
+    ax.annotate("실용 최적 구간  FR ≈ 15~20nm\nSTE 거의 최대 + SS 아직 최저",
+                xy=(50, 17.5), fontsize=11, ha="center", va="center",
                 color="white", weight="bold", zorder=8,
                 path_effects=[matplotlib.patheffects.withStroke(
                     linewidth=3.2, foreground="black")])
@@ -210,9 +214,12 @@ def draw_overlay(df):
     ax.set_xlim(X.min() - 1.6, X.max() + 1.6)
     ax.set_ylim(Y.min() - 1.0, Y.max() + 1.0)
 
-    fig.text(0.01, 0.015,
+    fig.text(0.01, 0.030,
              "붉은 점선(SSlin, mV/dec)은 낮을수록 좋다. FR 20nm 까지는 77~87 로 완만하지만 그 위로 100~124 까지 급격히 나빠진다 "
              "— STE 이득은 이미 포화했는데 게이트 제어만 잃는 구간.",
+             fontsize=8.5, color="#444")
+    fig.text(0.01, 0.008,
+             "상한 20nm 근거: nm당 STE 이득 ÷ nm당 SSlin 손실 비율이 FR 15→20 구간 2.91 에서 FR 20→22 구간 0.38 로 역전 (FR=15/22nm 실측 확인).",
              fontsize=8.5, color="#444")
     fig.tight_layout(rect=(0, 0.06, 1, 1))
     out = FIGDIR / "pres_tradeoff_overlay.png"
