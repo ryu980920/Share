@@ -1,92 +1,71 @@
 # =====================================================================
-#  지표 추출 기준 — 이 파일이 지표 정의의 유일한 출처
+# 분석 지표 정의 — 최종 기준
 #
-#  ★ 왜 이 파일이 중요한가
-#    STE(Stress Transfer Efficiency)를 사람마다 다른 지점/다른 환산 방식으로
-#    계산하면, 지도의 굴곡이 물리가 아니라 정의 차이 때문에 생긴다.
-#    그 오류는 그림만 봐서는 절대 발견되지 않는다.
-#    → 지표는 전원이 build.py 로만 뽑는다. 손계산 금지.
-#
-#  ★ 수정하려면 PR + 1인 승인. 수정 시 모든 격자점을 재추출해야 한다.
-#
-#  ★ 2026-08-05: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
-#    Stress Transfer Efficiency(STE) 프레이밍으로 전환. boundary_overlay
-#    섹션(People-Bean/Luryi-Suhir 경계선)을 제거했다 — README.md 참고.
-#
-#  ⚠ 아래 stress/ste 섹션의 extraction_note 는 전부 TODO다.
-#    Sentaurus Device 의 실제 Plot 변수/파일 형식과 STE 정규화 방법을
-#    Phase 0에서 확인한 뒤 build.py 의 파싱 로직과 함께 확정할 것.
+# 2026-08-27 최종 제출 보고서와 동기화.
+# STE는 ChFin 체적평균 채널 길이 방향 응력(SlFin)을 분자로 사용한다.
 # =====================================================================
 
 stress:
-  # ★ 이 프로젝트의 주 지표 중 하나 — STE 계산의 분자.
   metric_name: "stress_GPa"
-  definition: "채널 인접 지점의 응력 텐서 성분(StressELXX/YY/ZZ 중 어느 것을 볼지 TODO)"
-  extraction_point: "TODO — '채널 인접' 지점의 정확한 좌표. baseline/params.yaml#stress_transfer_efficiency.normalization.channel_adjacent_point 참고 (아직 null)"
-  reference: "절대 응력값(GPa). 예제 스크립트가 StressELXX/YY/ZZ 를 이미 doping 명령으로 출력하고 있음 — 단위(Pa/GPa 등) 확인 필요"
+  source_metric: "SlFin"
+  definition: "ChFin 영역의 채널 길이 방향 체적평균 응력"
+  component: "StressEL-ZZ"
+  input_unit: "MPa"
+  output_unit: "GPa"
+  conversion: "stress_GPa = SlFin_MPa / 1000"
 
 ste:
-  # ★ 이 프로젝트의 헤드라인 지표. Stress Transfer Efficiency.
   metric_name: "ste"
-  definition: "STE = 채널 인접 지점의 실제 응력(stress_GPa) / Ge%로 결정되는 명목 응력(Vegard's law 기반)"
-  nominal_stress_formula: "baseline/params.yaml#stress_transfer_efficiency.vegard_law — f(x)=0.042*x, x=Ge 몰분율(0~1)"
-  extraction_note: "⚠ TODO — 정규화 방법(어느 지점을 채널 인접으로 볼지, 명목 응력 계산에 어떤 탄성 상수를 쓸지)이 아직 팀 확정 전이라 build.py 는 ste 계산 없이 stress_GPa 만 다룬다. 확정되면 build.py 에 계산 로직을 추가할 것 (docs/ROLES.md P0 #3 과제)."
+  adopted: true
+  definition: "명목 SiGe 응력 대비 실제 ChFin 체적평균 채널 응력의 전달 효율"
+  formula: "abs(stress_GPa) / (180.0 * 0.042 * (Ge_percent / 100.0))"
+  biaxial_modulus_GPa: 180.0
+  vegard_coefficient: 0.042
+  numerator: "stress_GPa (SlFin 체적평균)"
+  selection_basis: "SlFin은 모든 Ge 조건에서 gmSat과 +0.95 이상 상관; 계면 단일점 방식은 평균 약 -0.207"
 
-# --- 보조 지표 (헤드라인 아님, 필요시만) --------------------------------
 vth:
   method: "constant_current"
   I_crit_A_per_um: 1.0e-7
 
-ion:
-  Vg: "TODO"      # baseline/params.yaml bias 확정 후 채울 것
-  Vd: "TODO"
-
 # =====================================================================
-#  [제거됨] boundary_overlay (People-Bean/Luryi-Suhir 경계선)
-#  2026-08-05 이전 버전엔 이 섹션이 있었다. 결함 경계 프레이밍을 폐기하며
-#  제거함 — 공식·출처는 git 이력에서 확인 가능. baseline/params.yaml 에도
-#  critical_thickness 섹션이 같은 이유로 제거되어 있다.
-# =====================================================================
-
-# =====================================================================
-#  Sentaurus Workbench 변수표를 그대로 쓸 때의 매핑
+# Sentaurus Workbench Export Variables 매핑
 #
-#  SWB 에서 Export Variables 로 CSV 를 뽑으면 build.py 가 자동 인식한다.
-#  아래 이름들이 SWB 의 파라미터/변수 이름과 일치해야 한다.
+# Ge: 몰분율(0~1) -> build.py에서 %로 변환
+# FR: um -> build.py에서 nm로 변환
 # =====================================================================
 swb:
-  # ★ 2026-08-10: 실제 SVisual export(g_localhost_..csv)로 확인한 실제 컬럼명으로 정정.
-  #   기존 GeMoleFraction/FR_nm/Stress/Vth 는 검증 전 추측값이라 실제 export 와 안 맞았음.
-  x_param: "Ge"   # 몰분율(0~1) 그대로 export 됨 — build.py 의 read_swb() 에서 ×100 해서 Ge_percent 로 변환
-  y_param: "FR"   # um 단위로 export 됨 (예: 0.01) — build.py 의 read_swb() 에서 ×1000 해서 FR_nm 으로 변환
-  map:                       # 우리 지표 이름 : SWB 추출변수 이름
-    SlFin_MPa:      "SlFin"        # 체적평균 응력(MPa) — STE 정규화 후보 1. build.py 가 이걸로 stress_GPa 잠정 계산
-    SlFin_pt_MPa:   "SlFin_pt"     # 계면 인접 단일점 응력(MPa) — STE 정규화 후보 2. 25격자점 다 모인 뒤 위와 비교해 최종 결정
-    VtiSat:         "VtiSat"       # 포화 문턱전압 (Vd=Vdd)
-    VtiLin:         "VtiLin"       # 선형 문턱전압 (저 Vd) — DIBL 계산에 필요
-    IdSat_norm:     "IdSat_norm"   # 정규화 포화전류
-    IdLin_norm:     "IdLin_norm"   # 정규화 선형전류
-    SSlin:          "SSlin"        # ★ 선형(저 Vd) Subthreshold Swing — 게이트 제어 품질의 지표.
-                                   #   이상적 60mV/dec 한계와 비교해야 하는 건 SSSat 이 아니라 이 값이다
-                                   #   (SS 이상식은 드레인이 장벽에 영향을 안 준다는 가정에서 유도되므로).
-    SSSat:          "SSSat"        # 포화(Vd=Vdd) SS — 게이트 제어 + DIBL + 접합누설이 섞인 값.
-                                   #   ⚠ 60mV/dec 와 직접 비교 금지. 2026-08-15 확인: FR=0 다섯 점은
-                                   #   형상이 동일한데도 SSSat 이 105→316 으로 벌어지는데, 같은 조건에서
-                                   #   SSlin·VtiWFd 역산 SS 는 76~84 로 거의 일정 — SSSat 이 SiGe 밴드갭
-                                   #   축소로 인한 드레인 접합 누설 바닥을 함께 재고 있다는 뜻.
-    gmSat:          "gmSat"        # 포화 트랜스컨덕턴스 — 이동도 프록시(Vt 시프트 영향 적음)
-    gmLin:          "gmLin"        # 선형 트랜스컨덕턴스
-    Ioff_norm:      "Ioff_norm"    # 정규화 누설전류 — 누설은 SS 에 섞지 말고 이 지표로 따로 볼 것
-    # ste 는 SWB 에서 직접 뽑는 지표가 아니라 stress_GPa 로부터 build.py 가
-    # 계산해야 하는 값이다 (정규화 방법 확정 전까지는 계산하지 않는다).
+  x_param: "Ge"
+  y_param: "FR"
+  map:
+    SlFin_MPa: "SlFin"
+    SlFin_pt_MPa: "SlFin_pt"
+    VtiSat: "VtiSat"
+    VtiLin: "VtiLin"
+    IdSat_norm: "IdSat_norm"
+    IdLin_norm: "IdLin_norm"
+    SSlin: "SSlin"
+    SSSat: "SSSat"
+    gmSat: "gmSat"
+    gmLin: "gmLin"
+    Ioff_norm: "Ioff_norm"
 
 # =====================================================================
-#  첨부물(사진/커브/메모) — runs/attachments/<run_id>/ 규칙
-#  build.py 가 파일 존재 여부만 확인해 status.json 에 표시한다.
-#  (docs/ROLES.md 3절 참고)
+# 지표 해석 원칙
+# =====================================================================
+interpretation:
+  electrostatics_metric: "SSlin"
+  leakage_metric: "Ioff_norm"
+  short_channel_metric: "DIBL_mV_V"
+  mobility_proxy: "gmSat"
+  notes:
+    - "SSSat은 게이트 제어와 드레인 접합 누설이 섞이므로 60 mV/dec 기준과 직접 비교하지 않는다."
+    - "정전제어는 SSlin, 누설은 Ioff_norm, 드레인 장벽 영향은 DIBL로 분리해 평가한다."
+
+# =====================================================================
+# 첨부물 — runs/attachments/<run_id>/
 # =====================================================================
 attachments:
   dir: "runs/attachments"
-  # 사진은 이름 상관없이 몇 장이든 올릴 수 있다 (notes.md 만 제외하고 전부 사진으로 집계).
   notes_file: "notes.md"
-  notes_preview_chars: 160     # 대시보드에 미리보기로 보여줄 글자 수
+  notes_preview_chars: 160
