@@ -1,126 +1,132 @@
 # =====================================================================
-#  베이스라인 파라미터 — 이 파일이 모든 수치의 유일한 출처(Single Source of Truth)
+# 최종 baseline 파라미터 — 프로젝트 수치의 단일 기준
 #
-#  ★ 2026-08-05 개정: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
-#    Stress Transfer Efficiency(STE) 프레이밍으로 전환. 아래 geometry/materials
-#    값들은 Sentaurus 표준 예제 FinFET_14nm(Munkang Choi, Synopsys, 2013 —
-#    학술 논문 아님) 스크립트를 실제로 열어 확인한 값이다. 이전까지 PLACEHOLDER
-#    였던 항목이 이번에 채워졌다 — 완전히 다른 수치로 바뀐 게 아니라 없던 값을
-#    찾아 채운 것이다. 옛 people_bean/luryi_suhir 섹션은 이 개정에서 제거했다
-#    (git 이력 또는 docs/technical-notes.md 에서 참고 가능).
-#
-#  ★ 아래 값 중 값이 비어있거나 "TODO"라고 적힌 것은 여전히 팀이 확정해야 한다.
-#    확정 전까지는 그 숫자를 "baseline 값"으로 인용하지 말 것.
-#
-#  ★ 수정하려면 PR + 나머지 2인 승인. 직접 push 금지.
-#  ★ SDE / SDevice / analysis 스크립트가 모두 이 파일을 참조한다.
+# 최종 제출 보고서와 일치하도록 2026-08-27에 정리했다.
+# 과거 provisional/TODO 상태는 git 이력과 competition 저장소에서 확인한다.
 # =====================================================================
 
 meta:
-  baseline_source: "Synopsys Sentaurus 표준 예제 FinFET_14nm (Munkang Choi, Synopsys, 2013) — 학술 논문 아님"
-  reference_paper_for_ste: "Choi et al. 2012 — 'Stress Transfer Efficiency' 용어 및 근접효과(nested/isolated) 데이터 출처. 팀은 이 용어의 선행 사용 여부를 더 검증하지 않기로 함 (README.md 참고, 리스크로 남김)"
-  last_verified: "2026-08-06"
-  verified_by: "유용성"        # 예제 파일을 직접 열어 대조. 실제 스크립트 4개(sprocess/sdevice/svisual x2)는 라이선스 확인 전까지 로컬에만 보관(.gitignore, README 참고)
+  project_title: "FinFET pMOS Embedded SiGe S/D의 응력 전달 효율(STE) 특성화 및 실용적 공정 마진 도출"
+  final_state: true
+  last_verified: "2026-08-27"
+  final_report: "ryu980920/competition/docs/reports/경진대회_보고서.docx"
 
 geometry:
-  # ↓ Choi/Synopsys FinFET_14nm 예제에서 확인된 값. 확인자 이름은 verified_by 에 채울 것.
-  L_gate_nm: 25                # 게이트 길이
-  fin_height_nm: 35            # 핀 높이
-  fin_bottom_width_nm: 15      # 핀 바닥 폭 (전체 폭)
-  fin_half_width_nm: 7.5       # half-fin 대칭 도메인에서 쓰는 반폭 (= fin_bottom_width_nm / 2)
-  fin_pitch_nm: 48
-  symmetry: "half-fin (Ymin=0, Ymax=0.5*Fpitch)"
-  gate_material_present: false # ★ 이 서브구조엔 게이트 재질이 없다 — 순수 응력 계산용
-  device_width_um: 1.0         # STE 계산엔 불필요(비율 지표라 폭 정규화 없음). 향후 확장 대비 유지
+  L_gate_nm: 25.0
+  fin_height_nm: 35.0
+  fin_width_top_nm: 15.0
+  fin_width_bottom_nm: 15.0
+  Esd_nm: 7.5
+
+doping:
+  sd_type: "p"
+  sd_species: "Boron"
+  sd_concentration_cm3: 2.0e20
+  channel_concentration_cm3: 2.0e18
+
+electrical:
+  Vdd_V: 0.8
+  gate_workfunction_eV: 4.623
+
+crystal:
+  channel_direction: "<110>"
+  substrate_orientation: "(100)"
 
 materials:
   channel: "Silicon"
-  epi_sd: "SiGe"                # Embedded Source/Drain 재질
-  ge_fraction_nominal: 0.50     # ★ GeMoleFraction 기본값(pMOS) — 공칭(baseline) 조건
-  esd_parameterized: true        # S/D-채널 가로 근접거리(Esd) — 예제에 이미 파라미터화됨
-  gate_workfunction_eV: null    # 해당 없음 — 이 서브구조엔 게이트 재질 자체가 없음 (gate_material_present: false)
-  gate_oxide: null              # 해당 없음 (위와 동일 이유)
+  embedded_sd: "SiGe"
 
-doping:
-  # ★ 2026-08-06: 실제 finfet_sprocess.scm(baseline/) 에서 확인 — 아래는
-  #   전부 고정 baseline 상수다. Nch/Nstop 은 예제 자체가 @Nch@/@Nstop@
-  #   매크로로 파라미터화해뒀다 — 즉 팀이 CSV(runs/*.csv, baseline CSV)의
-  #   Nch/Nstop 컬럼으로 격자점마다 값을 넘기고 있으며, 단일 baseline
-  #   숫자로 고정돼있지 않다. 실제 사용값은 각 CSV 행을 참고할 것.
-  sd_type: "p"                  # S/D(SiGe:B) — pMOS 응력공학
-  sd_boron_conc_cm3: 2.0e20     # set Nsd 2.0e20 — 고정값(스윕 안 됨), Dsd="Boron"
-  channel_doping_species: "Phosphorus"   # set Dch "Phosphorus" — pMOS n-well 채널이라 n형. 농도는 @Nch@(CSV별 상이)
-  channel_stop_doping_species: "Arsenic" # set Dstop "Arsenic". 농도는 @Nstop@(CSV별 상이)
-
-output:
-  stress_fields_already_extracted: true   # StressELXX/YY/ZZ 가 이미 doping 명령으로 출력되고 있음 — 추출 자체는 가능, 후처리만 하면 됨
-  stress_extraction_script: "baseline/finfet_svisual_stress.tcl"     # 로컬 전용(.gitignore, 2026-08-06) — SlFin/SwFin/ShFin 산출. 라이선스 확인 전 public 미커밋
-  electrical_extraction_script: "baseline/finfet_svisual_extract.tcl" # 로컬 전용(.gitignore, 2026-08-06) — VtiSat/IdSat_norm 등 산출. 라이선스 확인 전 public 미커밋
-
-# --- DoE 격자 정의 (analysis 스크립트가 읽는다) -------------------------
-# ★ 2026-08-06 확정. 근거:
-#   x(Ge%) 30~70%, 50% 중심 대칭 5점 — 이 fin 치수(반폭 7.5nm)에서는 결함
-#   경계가 Ge 42~100% 전 구간에서 안 걸려 상한을 결함 위험으로 제한할
-#   필요는 없음. 대신 물리모델이 실질적으로 검증된 범위(Choi 2012 데이터
-#   대역)와 실제 공정 현실성(Ge 70% 넘으면 에피 성장 품질·접합 누설 문제로
-#   실제 fab에서도 잘 안 씀)을 고려해 70%를 상한으로 잡음.
-#   y(FR) 0~35nm, 5점 — Gendron-Hansen 2015(SISPAD)가 FR≥10nm에서 응력이
-#   포화(plateau)된다고 명시해 0/10 두 점으로 포화 시작 지점을 잡고, 상단은
-#   원래 placeholder였던 40nm 대신 **fin 전체 높이(H=35nm)와 정확히 일치**하는
-#   35nm로 설정 — "리세스 깊이가 fin 전체 높이만큼일 때 응력 전달 효율이
-#   어떻게 되는가"라는, 이 프로젝트의 핵심 질문과 직결되는 물리적으로
-#   의미있는 경계값이기 때문 (40nm는 fin 높이를 근거 없이 초과하는 임의값이었음).
+# ---------------------------------------------------------------------
+# 본 5x5 설계실험
+# 추가 FR=15/22 nm 검증점은 본 회귀 격자에 섞지 않고
+# baseline/verification_FR_refine_G50.csv에 별도로 유지한다.
+# ---------------------------------------------------------------------
 doe:
   x_name: "Ge_percent"
-  x_levels: [30, 40, 50, 60, 70]        # ★ 확정 (2026-08-06). 50이 공칭(중앙)
-  y_name: "FR_nm"                        # ★ 리세스 깊이(fin 바닥 아래 방향)
-  y_levels: [0, 10, 20, 30, 35]          # ★ 확정 (2026-08-06). 35 = fin 전체 높이(H)와 일치
-  baseline_point: "G50_F0"               # ★ FR=0이 예제 원본과 같은 구조인지: finfet_sprocess.scm의 리세스 식각
-                                          #   로직이 FR=0 조건에서는 아예 실행되지 않는 코드 구조로 확인됨 +
-                                          #   Strain_Impact=0/1 SWB 비교로 응력-이동도 결합도 확인됨(2026-08-06,
-                                          #   verification.strain_impact_coupling 참고)
-  values_confirmed: true                 # ★ 확정 (2026-08-06). 25격자점(5x5) 본 스윕 시작 가능
+  x_levels: [30, 40, 50, 60, 70]
+  y_name: "FR_nm"
+  y_levels: [0, 10, 20, 30, 35]
+  baseline_point: "G50_F0"
+  values_confirmed: true
+  completed_points: 25
+  total_points: 25
 
-# --- Stress Transfer Efficiency 계산 (docs/technical-notes.md 참고 예정) -
+# ---------------------------------------------------------------------
+# Stress Transfer Efficiency — 최종 확정 정의
+#
+# STE = |stress_GPa| / (M * 0.042 * x)
+# x = Ge_percent / 100
+# stress_GPa = SlFin_MPa / 1000
+# ---------------------------------------------------------------------
 stress_transfer_efficiency:
-  vegard_law:
-    formula: "f(x) = 0.042 * x"    # x = Ge 몰분율(0~1) → 명목 격자 부정합
-    note: "일반 SiGe 합금 격자상수 근사식. 정확한 출처(논문) 인용이 필요하면 추가 확인할 것 — 미확인"
-  normalization:
-    # ★ 2026-08-06 (오전): baseline/finfet_svisual_stress.tcl 방식(ChFin
-    #   영역 전체 체적평균)을 STE 공식 정의로 일단 채택했었음.
-    # ★ 2026-08-06 (오후) 정정: G50_F0(Strain_Impact=1)에서 실제로 체적평균
-    #   vs 계면 인접 단일점 근사를 뽑아 비교해보니 차이가 예상보다 컸음
-    #   (아래 measured_diff_G50F0 참고, SlFin -2262 vs SlFin_pt -3482 =
-    #   53.9% 차이, ShFin 은 부호까지 반전(+490 vs -124)). 그래서 지금
-    #   단정적으로 "채택 확정"하지 않고, 아래 provisional 방식으로 전환.
-    adopted: "provisional"        # ★ 잠정 — 최종 채택은 25격자점 스윕 데이터 확보 후 결정 (2026-08-06 오후 변경)
-    decision: "당장 결론 내지 않고, 남은 24격자점 스윕에서 SlFin(체적평균)과 SlFin_pt(계면 인접 근사)를 둘 다 뽑아 모아둔 뒤, 전체 데이터로 어느 지표를 STE 정의로 쓸지 마지막에 결정하기로 함. finfet_svisual_stress.tcl 에 이미 둘 다 추출하는 코드가 들어있음 — 스윕 담당자 전원이 반드시 이 버전(2026-08-06, SlFin_pt/SwFin_pt/ShFin_pt/SlFin_diff_pct 포함)을 써야 함 (아래 note의 배포 문제 참고)."
-    channel_adjacent_point: "단일 좌표점 아님 — ChFin 영역 전체의 체적평균. integrate_field -regions {ChFin} -window {x:[0,H] y:[-0.5*Wbottom,0.5*Wbottom] z:[-0.5*L,0.5*L]} (baseline/finfet_svisual_stress.tcl)"
-    stress_to_GPa_method: "StressEL-ZZ(채널길이 방향)를 integrate_field로 ChFin 영역에 대해 적분한 값을, 같은 영역의 integrate_field -returndomain(체적)으로 나눠 체적평균을 구한 뒤 /1.0e6 → MPa (SlFin 컬럼). GPa로 쓰려면 /1000 추가. StressEL-XX/YY 는 각각 ShFin(fin높이 방향)/SwFin(fin폭 방향). 계면 인접 근사(SlFin_pt 등)는 x=0(fin 상단)/y=0/z=0 근방 2nm×2nm×1nm 슬래브로 같은 방식 적용."
-    measured_diff_G50F0: "G50_F0(Strain_Impact=1) 실측: SlFin=-2262MPa(체적평균) vs SlFin_pt=-3482MPa(계면근사) → 53.9% 차이(diff_pct 기준, 계면 쪽이 더 압축적). ShFin=+490 vs ShFin_pt=-124 → 부호 반전. SwFin=508 vs SwFin_pt=389 → 23% 차이(부호 동일). 단, 계면 근사 창(2nm×2nm×1nm)은 임의 설정값이라 절대 수치보다 '무시 못 할 정도로 다르다'는 방향성만 신뢰할 것."
-    note: "체적평균이 실제 반전층(계면) 응력을 상당히 희석/왜곡시킬 수 있다는 게 baseline 1점에서 확인됨 — 최종 정의는 스윕 데이터 전체(오프셋이 조건마다 일정한지 여부)를 보고 결정."
-    point_estimate_caveat: "SlFin_pt(-3482MPa, 2nm×2nm×1nm 창) vs SlFin_pt2(-3508MPa, 1nm×1nm×0.5nm 창) 비교 결과 SlFin_pt_conv_pct=-0.8% — 수렴 확인됨(2026-08-06). 즉 체적평균과의 53.9% 차이는 근사 창 노이즈가 아니라 실제 물리적 차이로 판단됨. 단, 이 fin은 tri-gate라 게이트 계면이 상단(top)/양 옆면(sidewall) 셋인데 지금 확인한 건 top 계면뿐 — 어느 계면을 대표값으로 볼지는 여전히 팀 판단 필요."
+  adopted: true
+  numerator_metric: "SlFin"
+  numerator_definition: "ChFin 영역의 채널 길이 방향 체적평균 응력"
+  stress_output_unit: "GPa"
+  vegard_coefficient: 0.042
+  biaxial_modulus_GPa: 180.0
+  formula: "abs(stress_GPa) / (biaxial_modulus_GPa * vegard_coefficient * (Ge_percent / 100))"
+  selection_basis:
+    volume_average_gmSat_correlation: ">= +0.95 for all five Ge conditions"
+    interface_point_mean_correlation: "about -0.207"
+    decision: "실제 이동도 변화와의 물리적 정합성을 기준으로 체적평균 SlFin을 최종 STE 분자로 채택"
 
-# --- Strain_Impact 응력-이동도 결합 검증 (Phase 0 체크리스트 항목) -------
+# ---------------------------------------------------------------------
+# 최종 설계 해석
+# ---------------------------------------------------------------------
+design_window:
+  practical_FR_nm: [15, 20]
+  reason: "STE 포화 이후 SSlin/Ioff 비용이 급증하며 FR=20 nm를 경계로 이득/대가 비율이 약 7.6배 감소"
+  FR_15_to_20_gain_cost_ratio: 2.91
+  FR_20_to_22_gain_cost_ratio: 0.38
+  FR_22_Ioff_norm: 1.93e-9
+
+# ---------------------------------------------------------------------
+# 검증 기록
+# ---------------------------------------------------------------------
 verification:
   strain_impact_coupling:
-    status: "confirmed"           # Strain_Impact=1 vs 0 SWB 비교로 응력->전기 결합이 실제로 작동하는지 확인
-    checked_point: "G50_F0 (Ge=0.50, FR=0)"
-    checked_date: "2026-08-06"
-    checked_by: "유용성 (Claude 보조 확인)"
-    evidence_csv: "baseline/verification_strain_impact_G50F0.csv"
-    key_deltas:
-      IdSat_norm: "1.704e-4(S=0) -> 5.574e-4(S=1), +227%"
-      IdLin_norm: "7.189e-5(S=0) -> 1.984e-4(S=1), +176%"
-      gmSat: "4.925e-5(S=0) -> 1.063e-4(S=1), +116%"
-      VtiSat_abs_V: "0.525(S=0) -> 0.403(S=1), -23% (pMOS |Vth| 감소)"
-      SSSat_mV_dec: "549.8(S=0) -> 183.5(S=1)"
-    note: "방향성(Ion 증가, |Vth| 감소)이 eSiGe pMOS 문헌(압축응력->정공 이동도 증가, 밸런스밴드 효과로 |Vth| 감소)과 일치. SDevice의 응력->전기 결합이 실제로 작동함을 확인. 단 SSSat 절대값(183~550mV/dec)은 이상적 60mV/dec 대비 매우 높음 — gate_material_present:false(게이트 스택 미완성) 영향으로 추정, 별도 확인 필요."
+    status: "confirmed"
+    point: "G50_F0"
+    result: "Strain_Impact 1/0 비교에서 IdSat_norm +227% 차이 — 응력-전기 결합 정상"
+    evidence: "baseline/verification_strain_impact_G50F0.csv"
 
-# --- [제거됨] 결함 경계 임계두께 공식 (people_bean_1985 / luryi_suhir_1986) --
-# 2026-08-05 이전 버전엔 이 섹션이 있었다. baseline 치수(fin 반폭 7.5nm)에서
-# Ge 42~100% 전 구간이 이론상 "무제한 보호"로 계산되어 결함 경계 프레이밍을
-# 폐기했으므로 제거함. 공식·출처는 git 이력 또는 이전 docs/technical-notes.md
-# 버전에서 확인 가능 (완전히 폐기된 게 아니라 "이 baseline 치수에서는 판별력이
-# 없다"는 것으로, 다른 치수를 다루게 되면 다시 꺼내 쓸 수 있다).
+  fr_geometry:
+    status: "confirmed"
+    point: "G50_F15"
+    result: "좌표축 단면에서 의도한 15 nm 추가 리세스 확인"
+
+  reproducibility:
+    status: "confirmed"
+    result: "동일 조건 4쌍 독립 재실행 편차 0.0%"
+
+  fr_refinement:
+    status: "confirmed"
+    points: ["G50_F15", "G50_F22"]
+    evidence: "baseline/verification_FR_refine_G50.csv"
+    conclusion: "실용 설계창 상한을 FR 20 nm로 확정"
+
+  strain_impact_fr_sweep:
+    status: "confirmed"
+    evidence: "baseline/verification_strain_impact_G50_FRsweep.csv"
+    conclusion: "깊은 FR의 정전제어·누설 열화는 형상 변화가 1차 원인"
+
+  fin_width_sensitivity:
+    status: "confirmed"
+    baseline_width_nm: 15.0
+    comparison_width_nm: 7.5
+    ge_levels: [60, 70]
+    evidence: "baseline/verification_finwidth_half_G60_G70.xlsx"
+    conclusion: "얕은 FR에서는 정전제어와 STE 개선, 깊은 FR에서는 역전 — 미세화될수록 FR 상한이 더 엄격"
+
+# ---------------------------------------------------------------------
+# 해석 범위
+# ---------------------------------------------------------------------
+scope:
+  Ge_percent: [30, 70]
+  FR_nm: [0, 35]
+  extrapolation_outside_range: false
+  notes:
+    - "Ge 효과는 70%에서도 포화하지 않았으므로 70%를 최적점으로 해석하지 않는다."
+    - "STE 절대값은 M=180 GPa 가정에 의존한다."
+    - "FinFET 수치 결과를 GAA에 직접 외삽하지 않는다."
