@@ -2,20 +2,13 @@
 """
 contour.py — grid.csv 로부터 2차원 지도를 그리고 상호작용을 판정한다.
 
-이 프로젝트의 결론이 나오는 스크립트다.
-  (1) Stress Transfer Efficiency(STE) 2차원 지도    ← 발표의 하이라이트 그림
-  (2) 교호작용 회귀 → 지도가 "직선/평행"인지 "휘었는지"를 눈이 아니라 숫자로 판정
-  (3) 시너지 정량화 → 개별 최적화 대비 결합 최적화의 추가 개선분
+주요 기능
+  (1) Stress Transfer Efficiency(STE) 2차원 지도
+  (2) 2요인 교호작용 회귀
+  (3) 개별/결합 최적화 차이 정량화
 
-★ 2026-08-05: 결함 경계(People-Bean/Luryi-Suhir) 프레이밍을 폐기하고
-  Stress Transfer Efficiency(STE) 프레이밍으로 전환하며, 이 스크립트의
-  people_bean_tc_nm()/luryi_suhir_safe_ge_threshold() 및 경계선 오버레이
-  로직을 전부 제거했다 — README.md 참고. Y축 변수명도 리세스 깊이
-  (Recess_nm) → FR(FR_nm)로 바뀌었다.
-
-★ ste 지표는 정규화 방법(baseline/params.yaml#stress_transfer_efficiency.
-  normalization)이 아직 팀 확정 전이라 build.py 가 계산해 넣지 않는다.
-  grid.csv 에 ste 컬럼이 없으면 이 스크립트는 stress_GPa 로만 지도를 그린다.
+STE 정의는 최종 확정되어 있으며 analysis/build.py가
+baseline/params.yaml의 공통 상수를 사용해 grid.csv에 자동 계산한다.
 
 사용법
     python analysis/contour.py
@@ -46,13 +39,13 @@ except ImportError:
 
 
 # ======================================================================
-#  교호작용 회귀
+# 교호작용 회귀
 # ======================================================================
 def interaction_regression(x, y, z):
     """
     z = b0 + b1*xc + b2*yc + b12*xc*yc  (xc, yc 는 [-1,+1] 로 코딩)
 
-    b12 가 통계적으로 0과 다르면 → 두 변수가 상호작용한다.
+    b12 가 통계적으로 0과 다르면 두 변수가 상호작용한다.
     """
     xc = 2 * (x - x.min()) / (x.max() - x.min()) - 1
     yc = 2 * (y - y.min()) / (y.max() - y.min()) - 1
@@ -81,7 +74,7 @@ def interaction_regression(x, y, z):
 
 
 def verdict(beta, tvals, pvals):
-    """상호작용 유무 판정 → (a)/(b)/(c) 패턴. STE/응력은 '높을수록 좋음' 기준."""
+    """상호작용 유무 판정. STE/응력은 높을수록 좋음 기준."""
     b1, b2, b12 = beta[1], beta[2], beta[3]
     t12 = tvals[3] if tvals is not None else np.nan
 
@@ -97,23 +90,20 @@ def verdict(beta, tvals, pvals):
 
     if not signif:
         pat = "(a) 상호작용 없음 — 독립"
-        note = ("지도가 직선·평행. Ge%·FR 을 따로 최적화해도 결과가 같다.\n"
-                "  → '설계 자유도 확보'가 결론이 된다.")
+        note = ("지도가 직선·평행에 가깝다. Ge%·FR 을 독립적인 설계 손잡이로 해석할 수 있다.\n"
+                "  → 최종 보고서의 핵심 결론과 연결한다.")
     elif b12 * np.sign(b1) * np.sign(b2) > 0:
         pat = "(b) 시너지"
-        note = ("두 변수를 함께 늘릴 때의 개선이 각각의 개선을 더한 것보다 크다.\n"
-                "  → 가장 강한 결론.")
+        note = "두 변수를 함께 변화시킬 때 단순 합보다 큰 효과가 나타난다."
     else:
         pat = "(c) 트레이드오프 — 최적점 이동"
-        note = ("Ge% 를 바꾸면 최적 FR 도 함께 이동한다.\n"
-                "  → 한 변수만 최적화하면 다른 변수의 최적점을 놓친다.\n"
-                "    '2차원 설계 맵'의 필요성을 직접 증명하는 결과.")
+        note = "한 변수의 변화가 다른 변수의 최적 조건을 이동시킨다."
 
     return pat, note, crit, rel
 
 
 # ======================================================================
-#  시너지 정량화 (STE/응력은 높을수록 좋음 — lower_is_better=False)
+# 시너지 정량화
 # ======================================================================
 def synergy(df, x_nom, y_nom, metric, lower_is_better=False):
     def val(sub):
@@ -143,7 +133,7 @@ def synergy(df, x_nom, y_nom, metric, lower_is_better=False):
 
 
 # ======================================================================
-#  그림
+# 그림
 # ======================================================================
 def draw(df, metric, label, fname, cmap="viridis"):
     piv = df.pivot_table(index="FR_nm", columns="Ge_percent", values=metric)
@@ -190,25 +180,24 @@ def main():
     if not doe.get("values_confirmed", False):
         print("=" * 70)
         print(" ⚠ baseline/params.yaml 의 doe.values_confirmed 가 false 다.")
-        print("   아래 결과는 참고용이다 — Ge%/FR 스윕 값이 확정되면 다시 돌릴 것.")
+        print("   Ge%/FR 스윕 값을 확정한 뒤 다시 실행할 것.")
         print("=" * 70)
         print()
 
-    norm = params.get("stress_transfer_efficiency", {}).get("normalization", {})
-    if "ste" not in df.columns and args.metric == "ste":
-        print("⚠ grid.csv 에 ste 컬럼이 없다. STE 정규화 방법이 아직 확정되지 않았기 때문이다")
-        print("  (baseline/params.yaml#stress_transfer_efficiency.normalization 확인).")
-        print("  --metric stress_GPa 로 다시 실행할 것.")
-        return 1
-    if not norm.get("channel_adjacent_point") or not norm.get("stress_to_GPa_method"):
-        print("=" * 70)
-        print(" ⚠ STE 정규화 방법(채널 인접 지점, GPa 환산)이 아직 팀 확정 전이다.")
-        print("   지금 나오는 ste 값(있다면)은 참고용이며 결론이 아니다.")
-        print("=" * 70)
-        print()
+    ste_cfg = params.get("stress_transfer_efficiency", {})
+    if args.metric == "ste":
+        if not ste_cfg.get("adopted", False):
+            print("STE 정의가 params.yaml에서 adopted=true가 아니다.", file=sys.stderr)
+            return 1
+        if "ste" not in df.columns:
+            print("grid.csv 에 ste 컬럼이 없다. python analysis/build.py 를 먼저 실행할 것.",
+                  file=sys.stderr)
+            return 1
 
-    x_nom = float(doe.get("x_levels", [np.nan])[len(doe.get("x_levels", [])) // 2])
-    y_nom = float(doe.get("y_levels", [np.nan])[len(doe.get("y_levels", [])) // 2])
+    x_levels = doe.get("x_levels", [])
+    y_levels = doe.get("y_levels", [])
+    x_nom = float(x_levels[len(x_levels) // 2])
+    y_nom = float(y_levels[len(y_levels) // 2])
     metric = args.metric
 
     sub = df[np.isfinite(df[metric])] if metric in df.columns else df.iloc[0:0]
@@ -247,19 +236,18 @@ def main():
     if s:
         print()
         print("=" * 70)
-        print(f" 시너지 정량화 (기준점 G{x_nom:.0f}_F{y_nom:.0f})")
+        print(f" 기준점 G{x_nom:.0f}_F{y_nom:.0f} 대비 변화")
         print("=" * 70)
         print(f"  Ge% 만 최적화          : {s['dX']:+.3f}")
         print(f"  FR 만 최적화           : {s['dY']:+.3f}")
         print(f"  개별 최적화의 단순 합  : {s['dX']+s['dY']:+.3f}")
         print(f"  결합 최적화 (실제)     : {s['dJ']:+.3f}")
         print(f"  ---------------------------------------------")
-        print(f"  ★ 시너지 (추가 개선분) : {s['syn']:+.3f}")
+        print(f"  차이                    : {s['syn']:+.3f}")
         print(f"\n  최댓값 지점: {s['best']['run_id']}  "
               f"(Ge%={s['best']['Ge_percent']:.0f}, FR={s['best']['FR_nm']:.0f}nm)")
-        print("\n  ※ 이 표의 숫자가 발표 결론 문장에 그대로 들어간다.")
-        print("  ⚠ metric 이 ste 가 아니라 stress_GPa 라면, 이 최댓값은 'STE 관점의 최적'이")
-        print("    아니라 '절대 응력 관점의 최적'이라는 것을 발표에서 구분해서 말할 것.")
+        if metric != "ste":
+            print("  ※ stress_GPa 최댓값과 실용 설계 최적점은 같은 개념이 아니다.")
 
     out = draw(df, metric, metric, f"contour_{metric}.png")
     if out:
